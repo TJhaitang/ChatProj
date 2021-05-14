@@ -69,13 +69,13 @@ class Login extends JFrame {
 
 				if (met == 1) {
 					if (check == 1) {// 登陆成功
-						// ClientWindow cw = new ClientWindow(username, fromServer, toServer);// 打开用户界面
-						// cw.addWindowListener(new WindowAdapter() {
-						// public void windowClosing(WindowEvent e) {
-						// System.exit(0);
-						// }
-						// });
-						// lg.setVisible(false);
+						 ClientWindow cw = new ClientWindow(username, s);// 打开用户界面
+						 cw.addWindowListener(new WindowAdapter() {
+						 public void windowClosing(WindowEvent e) {
+						 System.exit(0);
+						 }
+						 });
+						 lg.setVisible(false);
 						JOptionPane.showMessageDialog(lg, "没问题,请退出");// 测试代码用
 					} else if (check == 0) {
 						JOptionPane.showMessageDialog(lg, "用户名或密码错误");
