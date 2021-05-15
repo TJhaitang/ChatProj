@@ -7,9 +7,8 @@ import java.io.*;
 import java.net.*;
 
 public class ChatClient {
-	private Socket s;
-	private DataInputStream fromServer = null;
-	private DataOutputStream toServer = null;
+	private Socket MsgSocket;
+	private Socket FileSocket;
 
 	public static void main(String[] args) {
 		ChatClient cc = new ChatClient();
@@ -17,13 +16,18 @@ public class ChatClient {
 
 	ChatClient() {
 		try {
-			s = new Socket("localhost", 12138);
-			fromServer = new DataInputStream(s.getInputStream());
-			toServer = new DataOutputStream(s.getOutputStream());
+			MsgSocket = new Socket("localhost", 12138);// 建立连接
+			FileSocket = new Socket("localhost", 12138);
 		} catch (Exception e) {
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
+			System.exit(0);
 		}
-		Login lg = new Login(fromServer, toServer);
+		ServerConnection s = new ServerConnection(MsgSocket, FileSocket);
+		if (!s.check()) {
+			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
+			System.exit(0);
+		}
+		Login lg = new Login(s);
 		lg.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
@@ -32,11 +36,10 @@ public class ChatClient {
 	}
 }
 
-class Login extends JFrame {
+class Login extends JFrame implements Flag {
 	private Login lg;
 
-	private DataInputStream fromServer;
-	private DataOutputStream toServer;
+	private ServerConnection s;
 
 	private JPanel usernamePanel = new JPanel();
 	private JPanel passwordPanel = new JPanel();
@@ -48,6 +51,8 @@ class Login extends JFrame {
 	private JButton SigninButton = new JButton("Sign in");
 	private JTextArea usernameTextArea = new JTextArea();
 	private JPasswordField passwordField = new JPasswordField();
+
+	private int IsSending = 0;
 
 	private class sendMesg implements Runnable {
 		private String username;
@@ -62,40 +67,41 @@ class Login extends JFrame {
 
 		@Override
 		public void run() {
+			IsSending = 1;
 			try {
-				toServer.writeUTF(username);
-				toServer.writeUTF(password);
-				int check = fromServer.readInt();
+				s.getMsgToServer().writeUTF(username);
+				s.getMsgToServer().writeUTF(password);
+				int check = s.getMsgFromServer().readInt();
 
-				if (met == 1) {
-					if (check == 1) {// 登陆成功
-						 ClientWindow cw = new ClientWindow(username, s);// 打开用户界面
-						 cw.addWindowListener(new WindowAdapter() {
-						 public void windowClosing(WindowEvent e) {
-						 System.exit(0);
-						 }
-						 });
-						 lg.setVisible(false);
-						JOptionPane.showMessageDialog(lg, "没问题,请退出");// 测试代码用
-					} else if (check == 0) {
+				if (met == Flag.LOGIN) {
+					if (check == Flag.SUCCESS) {// 登陆成功
+						// ClientWindow cw = new ClientWindow(s);// 打开用户界面
+						// cw.addWindowListener(new WindowAdapter() {
+						// public void windowClosing(WindowEvent e) {
+						// System.exit(0);
+						// }
+						// });
+						// lg.setVisible(false);
+						JOptionPane.showMessageDialog(lg, "没问题");
+					} else if (check == Flag.FAIL) {
 						JOptionPane.showMessageDialog(lg, "用户名或密码错误");
 					}
-				} else if (met == 2) {
-					if (check == 1)
+				} else if (met == Flag.SIGNUP) {
+					if (check == Flag.SUCCESS)
 						JOptionPane.showMessageDialog(lg, "注册成功");
-					else if (check == 0)
+					else if (check == Flag.FAIL)
 						JOptionPane.showMessageDialog(lg, "用户已存在");
 				}
 
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			IsSending = 0;
 		}
 	}
 
-	Login(DataInputStream fServer, DataOutputStream tServer) {// 这里还是写socket吧，可能需要用到判断是否连接之类的功能
-		this.fromServer = fServer;
-		this.toServer = tServer;
+	Login(ServerConnection s) {// 这里还是写socket吧，可能需要用到判断是否连接之类的功能
+		this.s = s;
 
 		this.setLayout(new BorderLayout());
 		usernamePanel.add(label1);
@@ -114,8 +120,11 @@ class Login extends JFrame {
 		loginButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				if (IsSending == 1) {
+					return;
+				}
 				try {
-					toServer.writeInt(1);
+					s.getMsgToServer().writeInt(1);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -128,8 +137,11 @@ class Login extends JFrame {
 		SigninButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				if (IsSending == 1) {
+					return;
+				}
 				try {
-					toServer.writeInt(2);
+					s.getMsgToServer().writeInt(2);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -151,5 +163,61 @@ class Login extends JFrame {
 		this.lg = this;
 
 		this.setVisible(true);
+	}
+}
+
+class ServerConnection {
+	private Socket MsgSocket;
+	private Socket FileSocket;
+	private DataInputStream MsgFromServer;
+	private DataOutputStream MsgToServer;
+	private DataInputStream FileFromServer;
+	private DataOutputStream FileToServer;
+
+	ServerConnection(Socket msg, Socket file) {
+		this.MsgSocket = msg;
+		this.FileSocket = file;
+		try {
+			MsgFromServer = new DataInputStream(MsgSocket.getInputStream());
+			MsgToServer = new DataOutputStream(MsgSocket.getOutputStream());
+			FileFromServer = new DataInputStream(FileSocket.getInputStream());
+			FileToServer = new DataOutputStream(FileSocket.getOutputStream());
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
+	}
+
+	boolean check() {// 判断两个Socket是否连接到同一个用户
+		int tip = Flag.FAIL;
+		try {
+			int a = MsgFromServer.readInt();
+			int b = FileFromServer.readInt();
+			if (a == b) {
+				tip = Flag.SUCCESS;
+				MsgToServer.writeInt(Flag.SUCCESS);
+			} else {
+				tip = Flag.FAIL;
+				MsgToServer.writeInt(Flag.FAIL);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return (tip == Flag.SUCCESS);
+	}
+
+	DataInputStream getMsgFromServer() {
+		return MsgFromServer;
+	}
+
+	DataOutputStream getMsgToServer() {
+		return MsgToServer;
+	}
+
+	DataInputStream getFileFromServer() {
+		return FileFromServer;
+	}
+
+	DataOutputStream getFileToServer() {
+		return FileToServer;
 	}
 }
