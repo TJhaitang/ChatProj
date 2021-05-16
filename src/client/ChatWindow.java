@@ -1,13 +1,14 @@
 // package client;
 
 import javax.swing.*;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 
 // 私聊 创建好友聊天界面，将本地聊天数据读取到这里，按照时间顺序制作窗口
-abstract class ChatWindow extends JFrame {
+abstract class ChatWindow extends JFrame implements Flag {
 	private JTextPane MsgLabel = new JTextPane();
 	private JScrollPane MsgList;
 
@@ -16,7 +17,6 @@ abstract class ChatWindow extends JFrame {
 	private JButton sendButton = new JButton("发送");
 	private JButton voiceButton = new JButton("语音");
 	private JPanel buttonPanel_text = new JPanel();
-	private JPanel textPanel = new JPanel();
 
 	private JPanel buttonPanel_side = new JPanel();
 	private JButton imageButton = new JButton("图片");
@@ -36,7 +36,7 @@ abstract class ChatWindow extends JFrame {
 		buttonPanel_side.add(imageButton);
 		fileButton.setSize(30, 20);
 		buttonPanel_side.add(fileButton);
-		buttonPanel_side.setBounds(0, 0, 30, 355);
+		buttonPanel_side.setBounds(0, 0, 30, 455);
 
 		this.add(buttonPanel_side);
 		// 聊天信息展示部分
@@ -49,13 +49,15 @@ abstract class ChatWindow extends JFrame {
 		// 聊天输出部分
 		Text.setLineWrap(true);
 		TextBox = new JScrollPane(Text);
-		TextBox.setBounds(0, 355, 650, 100);
+		TextBox.setBounds(30, 355, 620, 100);
 		this.add(TextBox);
 
 		sendButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// -//发消息
+				Sender sender = new Sender(Text.getText());
+				Text.setText("");
+				new Thread(sender).start();
 			}
 		});
 		voiceButton.addActionListener(new ActionListener() {
@@ -79,17 +81,70 @@ abstract class ChatWindow extends JFrame {
 	}
 
 	ChatWindow(ServerConnection s) {
+		this();
 		this.s = s;
+	}
 
+	public void AddMessage(String name, String msg) {// 在这里实现信息的展示
+		if (name == s.getSelfName()) {// 自己发的消息
+			StyledDocument document = (StyledDocument) MsgLabel.getDocument();
+			try {
+				document.insertString(document.getLength(), name + "\n" + msg + "\n", null);
+				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
+		} else {// 别人发的
+			StyledDocument document = (StyledDocument) MsgLabel.getDocument();
+			try {
+				document.insertString(document.getLength(), name + "\n" + msg + "\n", null);
+				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	// 发信工具类，收信类放到用户界面内
+	private class Sender implements Runnable {
+		String str;
+
+		Sender(String str) {
+			this.str = str;
+		}
+
+		@Override
+		public void run() {
+			try {
+				AddMessage(s.getSelfName(), str);
+				s.getMsgToServer().writeUTF(str);
+				s.getMsgToServer().writeInt(Flag.SENDTEXT);
+				int a = s.getMsgFromServer().readInt();
+				if (a != Flag.SUCCESS) {
+					JOptionPane.showMessageDialog(MsgList, "发送失败");
+				}
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(MsgList, "发送失败");
+				e.printStackTrace();
+			}
+		}
 	}
 }
 
 class FriendWindow extends ChatWindow {
+	String friendName;
+
 	public static void main(String[] args) {
-		FriendWindow fw = new FriendWindow("1");
+		ServerConnection s = new ServerConnection();
+		s.setSelfName("llala");
+		FriendWindow fw = new FriendWindow(s, "1");
+
 	}
 
-	FriendWindow(String friendId) {
+	FriendWindow(ServerConnection s, String friendName) {
+		super(s);
+		this.friendName = friendName;
+		this.setTitle(friendName);
 		this.setVisible(true);
 	}
 }

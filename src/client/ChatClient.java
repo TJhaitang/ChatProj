@@ -28,11 +28,6 @@ public class ChatClient {
 			System.exit(0);
 		}
 		Login lg = new Login(s);
-		lg.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				System.exit(0);
-			}
-		});
 	}
 }
 
@@ -47,8 +42,8 @@ class Login extends JFrame implements Flag {
 	private JPanel textPanel = new JPanel();
 	private JLabel label1 = new JLabel("username");
 	private JLabel label2 = new JLabel("password");
-	private JButton loginButton = new JButton("Login");
-	private JButton SigninButton = new JButton("Sign in");
+	private JButton loginButton = new JButton("登录");
+	private JButton SigninButton = new JButton("注册");
 	private JTextArea usernameTextArea = new JTextArea();
 	private JPasswordField passwordField = new JPasswordField();
 
@@ -75,6 +70,7 @@ class Login extends JFrame implements Flag {
 
 				if (met == Flag.LOGIN) {
 					if (check == Flag.SUCCESS) {// 登陆成功
+						s.setSelfName(username);
 						// ClientWindow cw = new ClientWindow(s);// 打开用户界面
 						// cw.addWindowListener(new WindowAdapter() {
 						// public void windowClosing(WindowEvent e) {
@@ -123,6 +119,10 @@ class Login extends JFrame implements Flag {
 				if (IsSending == 1) {
 					return;
 				}
+				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
+						|| passwordField.getPassword().length == 0) {
+					return;
+				}
 				try {
 					s.getMsgToServer().writeInt(1);
 				} catch (IOException e1) {
@@ -138,6 +138,10 @@ class Login extends JFrame implements Flag {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (IsSending == 1) {
+					return;
+				}
+				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
+						|| passwordField.getPassword().length == 0) {
 					return;
 				}
 				try {
@@ -157,22 +161,58 @@ class Login extends JFrame implements Flag {
 		this.add(textPanel, BorderLayout.CENTER);
 		this.add(buttonPanel, BorderLayout.SOUTH);
 
+		JLabel titleLabel = new JLabel("聊天室");
+		this.add(titleLabel, BorderLayout.NORTH);
+
 		this.setSize(300, 150);
 		this.setLocation(600, 300);
 
 		this.lg = this;
+		this.setTitle("登录");
+
+		this.addWindowListener(new WindowAdapter() {
+
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
+
+		// this.addKeyListener(new KeyAdapter() {
+		// @Override
+		// public void keyPressed(KeyEvent e) {
+		// JOptionPane.showMessageDialog(lg, e.toString());
+		// super.keyPressed(e);
+		// if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+		// if (IsSending == 1) {
+		// return;
+		// }
+		// try {
+		// s.getMsgToServer().writeInt(1);
+		// } catch (IOException e1) {
+		// e1.printStackTrace();
+		// }
+		// sendMesg messenger = new sendMesg(usernameTextArea.getText(),
+		// String.valueOf(passwordField.getPassword()), 1);
+		// new Thread(messenger).start();
+		// }
+		// }
+		// });
 
 		this.setVisible(true);
 	}
 }
 
 class ServerConnection {
+	private String SelfName;
 	private Socket MsgSocket;
 	private Socket FileSocket;
 	private DataInputStream MsgFromServer;
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
+
+	ServerConnection() {
+	}
 
 	ServerConnection(Socket msg, Socket file) {
 		this.MsgSocket = msg;
@@ -219,5 +259,13 @@ class ServerConnection {
 
 	DataOutputStream getFileToServer() {
 		return FileToServer;
+	}
+
+	void setSelfName(String s) {
+		this.SelfName = s;
+	}
+
+	String getSelfName() {
+		return this.SelfName;
 	}
 }

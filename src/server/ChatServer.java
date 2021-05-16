@@ -67,6 +67,7 @@ public class ChatServer {
 							t.getMsgToClient().writeInt(Flag.SUCCESS);// 向用户发送成功信号
 							t.setUsername(username);
 							UserMap.put(username, t);// 将用户放入hashmap__还需要拿出来
+							System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":登录为 " + username);
 							HandleASession hand = new HandleASession(t);//
 							new Thread(hand).start();
 							br.close();
@@ -94,6 +95,7 @@ public class ChatServer {
 					}
 
 				} catch (IOException e) {
+					System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":退出");
 					return;
 				}
 			}
@@ -175,6 +177,10 @@ class TargetConnection {// 建立一个类用以存放与用户的连接
 
 	DataOutputStream getFileToClient() {
 		return FileToClient;
+	}
+
+	Socket getMsgSocket() {
+		return this.MsgSocket;
 	}
 
 }

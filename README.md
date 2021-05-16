@@ -1,5 +1,18 @@
 
 # 更新日志
+## 210516xjz
+>增加   
+1. 增加了用户聊天窗口的父类，对其中的大体结构进行了确定
+>改动   
+>修复   
+>其他
+1. 服务器与本地文件匹配时，保证服务器数据先于本地，同步时为服务器端数据下载到本地-匹配方式：[md5HashCode](https://blog.csdn.net/qq_25646191/article/details/78863110)
+2. 聊天框内可以加入[9-patch](https://github.com/freeseawind/NinePatch#readme)图片背景
+3. 聊天信息展示框使用JTextPane,可以实现[html语言插入](https://blog.csdn.net/sujudz/article/details/7928384)从而展示图片(包括gif).
+4. 美化等后面再做吧我现在是做不下去了
+5. 本地文件中群组名由服务器确定
+
+
 ## 210515xjz
 > 增加
 1. 增加了连接类，创建了sever:TargetConnection与client:ServerConnection来建立连接，实现了其中的对应逻辑.
