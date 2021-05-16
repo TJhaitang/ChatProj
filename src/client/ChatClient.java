@@ -184,7 +184,7 @@ class Login extends JFrame implements Flag {
 		// super.keyPressed(e);
 		// if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 		// if (IsSending == 1) {
-		// return;
+		// r eturn;
 		// }
 		// try {
 		// s.getMsgToServer().writeInt(1);
@@ -210,6 +210,7 @@ class ServerConnection {
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
+	private File parentFile = new File("users/");
 
 	ServerConnection() {
 	}
@@ -267,5 +268,9 @@ class ServerConnection {
 
 	String getSelfName() {
 		return this.SelfName;
+	}
+
+	File getParentFile() {
+		return this.parentFile;
 	}
 }
