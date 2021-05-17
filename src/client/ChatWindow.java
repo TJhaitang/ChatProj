@@ -11,7 +11,8 @@ abstract class ChatWindow extends JFrame {
 }
 
 class FriendWindow extends ChatWindow {
-	FriendWindow(String friendId, Socket MsgSocket, Socket FileSocket) {
-
+	FriendWindow(String friendId, ServerConnection sc)
+	{
+		System.out.println("111");
 	}
 }
