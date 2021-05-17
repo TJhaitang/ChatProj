@@ -1,59 +1,59 @@
-// package client;
+package client;
+
+import server.Flag;
 
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalIconFactory;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Vector;
+import java.util.function.Predicate;
 
 // 传进用户ID，用s连接到服务器,创建界面（做按钮、界面列表、个人信息、朋友圈入口）
 // 按钮连接到聊天框、朋友圈界面
 class ClientWindow extends JFrame implements Flag
 {
-	private ChatWindow w;
-	private ServerConnection sc;
 
-	public static void main(String[] args)
-	{
-		ClientWindow clientWindow = new ClientWindow(null);
-
-		clientWindow.addWindowListener(new WindowAdapter()
-		{
-			@Override
-			public void windowClosing(WindowEvent e)
-			{
-				System.exit(0);
-			}
-
-		});
-
-		clientWindow.setBounds(1500, 100, 400, 800);
-		clientWindow.setVisible(true);
-		clientWindow.setLayout(null);
-		clientWindow.setResizable(true);
-	}
+	Vector<FriendWindow> friendWindows = new Vector<>();
+	private final ServerConnection sc;
 
 	ClientWindow(ServerConnection sc)
 	{
 		this.sc = sc;
+
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
 		tabbedPane.setPreferredSize(new Dimension(300, 300));
 		tabbedPane.setBorder(null);
 		tabbedPane.setBackground(Color.white);
 		tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+		// 创建整个好友列表
 		createFriendsScrollPanel(tabbedPane);
 		JScrollPane groupScrollPane = new JScrollPane();
 		Icon groupPaneIcon = new MetalIconFactory.TreeLeafIcon();
 		tabbedPane.addTab("群组列表", groupPaneIcon, groupScrollPane, "这里有你所有群组的信息");
 		tabbedPane.addTab("空间", null, null, "朋友圈");
-
 		tabbedPane.setEnabledAt(2, true);
 		tabbedPane.setSelectedIndex(0);
+		tabbedPane.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				super.mouseEntered(e);
+				tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				super.mouseExited(e);
+				tabbedPane.setCursor(Cursor.getDefaultCursor());
+			}
+		});
+		//最后把选项卡放入frame
 		this.add(tabbedPane, BorderLayout.CENTER);
 //		new Thread(new C()).start();
 		this.setBounds(100, 100, 400, 800);
@@ -72,12 +72,11 @@ class ClientWindow extends JFrame implements Flag
 		{
 			br = new BufferedReader(
 					new FileReader(System.getProperty("user.dir") + "/src/client/users/admin/friendList.txt"));
-			String tmp = br.readLine();
-			while (tmp != null)
+			String tmp;
+			while ((tmp = br.readLine()) != null)
 			{
 				JComponent panel = createFriendPanel(tmp);
 				friendPane.add(panel);
-				tmp = br.readLine();
 			}
 			br.close();
 		}
@@ -101,19 +100,23 @@ class ClientWindow extends JFrame implements Flag
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
-				new FriendWindow(text, sc);
+
+				friendWindows.add(new FriendWindow(sc, text));
+				// TODO 处理不够完善；可考虑使用定时器定期清理vector
+				friendWindows.removeIf(friendWindow->!friendWindow.isVisible());
+				System.out.println(friendWindows.size());
 			}
 
 			@Override
 			public void mousePressed(MouseEvent e)
 			{
-
+				panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e)
 			{
-
+				panel.setCursor(Cursor.getDefaultCursor());
 			}
 
 			@Override

@@ -1,5 +1,7 @@
 package client;
 
+import server.Flag;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -79,6 +81,7 @@ class Login extends JFrame implements Flag
 
 		private Boolean loginClientWindow()
 		{
+			s.setSelfName(username);
 			ClientWindow clientWindow = new ClientWindow(s);
 			clientWindow.addWindowListener(new WindowAdapter()
 			{
@@ -144,7 +147,7 @@ class Login extends JFrame implements Flag
 	}
 
 	Login(ServerConnection s)
-	{// 这里还是写socket吧，可能需要用到判断是否连接之类的功能
+	{
 		this.s = s;
 
 		this.setLayout(new BorderLayout());
@@ -166,12 +169,14 @@ class Login extends JFrame implements Flag
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
+
 				if (IsSending == 1)
 				{
 					return;
 				}
 				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-						|| passwordField.getPassword().length == 0) {
+				    || passwordField.getPassword().length == 0)
+				{
 					return;
 				}
 				try
@@ -198,10 +203,12 @@ class Login extends JFrame implements Flag
 					return;
 				}
 				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-						|| passwordField.getPassword().length == 0) {
+				    || passwordField.getPassword().length == 0)
+				{
 					return;
 				}
-				try {
+				try
+				{
 					s.getMsgToServer().writeInt(2);
 				}
 				catch (IOException e1)
@@ -229,9 +236,11 @@ class Login extends JFrame implements Flag
 		this.lg = this;
 		this.setTitle("登录");
 
-		this.addWindowListener(new WindowAdapter() {
+		this.addWindowListener(new WindowAdapter()
+		{
 
-			public void windowClosing(WindowEvent e) {
+			public void windowClosing(WindowEvent e)
+			{
 				System.exit(0);
 			}
 		});
@@ -270,9 +279,10 @@ class ServerConnection
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
-	private File parentFile = new File("users/");
+	private final File parentFile = new File(System.getProperty("user.dir") + "/src/client/users/");
 
-	ServerConnection() {
+	ServerConnection()
+	{
 	}
 
 	ServerConnection(Socket msg, Socket file)
@@ -336,15 +346,18 @@ class ServerConnection
 		return FileToServer;
 	}
 
-	void setSelfName(String s) {
+	void setSelfName(String s)
+	{
 		this.SelfName = s;
 	}
 
-	String getSelfName() {
+	String getSelfName()
+	{
 		return this.SelfName;
 	}
 
-	File getParentFile() {
+	File getParentFile()
+	{
 		return this.parentFile;
 	}
 }
