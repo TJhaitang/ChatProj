@@ -57,8 +57,8 @@ class Login extends JFrame implements Flag
 	private JPanel textPanel = new JPanel();
 	private JLabel label1 = new JLabel("username");
 	private JLabel label2 = new JLabel("password");
-	private JButton loginButton = new JButton("Login");
-	private JButton SigninButton = new JButton("Sign in");
+	private JButton loginButton = new JButton("登录");
+	private JButton SigninButton = new JButton("注册");
 	private JTextArea usernameTextArea = new JTextArea();
 	private final JPasswordField passwordField = new JPasswordField();
 
@@ -170,6 +170,10 @@ class Login extends JFrame implements Flag
 				{
 					return;
 				}
+				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
+						|| passwordField.getPassword().length == 0) {
+					return;
+				}
 				try
 				{
 					s.getMsgToServer().writeInt(1);
@@ -193,8 +197,11 @@ class Login extends JFrame implements Flag
 				{
 					return;
 				}
-				try
-				{
+				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
+						|| passwordField.getPassword().length == 0) {
+					return;
+				}
+				try {
 					s.getMsgToServer().writeInt(2);
 				}
 				catch (IOException e1)
@@ -213,10 +220,42 @@ class Login extends JFrame implements Flag
 		this.add(textPanel, BorderLayout.CENTER);
 		this.add(buttonPanel, BorderLayout.SOUTH);
 
+		JLabel titleLabel = new JLabel("聊天室");
+		this.add(titleLabel, BorderLayout.NORTH);
+
 		this.setSize(300, 150);
 		this.setLocation(600, 300);
 
 		this.lg = this;
+		this.setTitle("登录");
+
+		this.addWindowListener(new WindowAdapter() {
+
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
+
+		// this.addKeyListener(new KeyAdapter() {
+		// @Override
+		// public void keyPressed(KeyEvent e) {
+		// JOptionPane.showMessageDialog(lg, e.toString());
+		// super.keyPressed(e);
+		// if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+		// if (IsSending == 1) {
+		// r eturn;
+		// }
+		// try {
+		// s.getMsgToServer().writeInt(1);
+		// } catch (IOException e1) {
+		// e1.printStackTrace();
+		// }
+		// sendMesg messenger = new sendMesg(usernameTextArea.getText(),
+		// String.valueOf(passwordField.getPassword()), 1);
+		// new Thread(messenger).start();
+		// }
+		// }
+		// });
 
 		this.setVisible(true);
 	}
@@ -224,12 +263,17 @@ class Login extends JFrame implements Flag
 
 class ServerConnection
 {
+	private String SelfName;
 	private Socket MsgSocket;
 	private Socket FileSocket;
 	private DataInputStream MsgFromServer;
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
+	private File parentFile = new File("users/");
+
+	ServerConnection() {
+	}
 
 	ServerConnection(Socket msg, Socket file)
 	{
@@ -290,5 +334,17 @@ class ServerConnection
 	DataOutputStream getFileToServer()
 	{
 		return FileToServer;
+	}
+
+	void setSelfName(String s) {
+		this.SelfName = s;
+	}
+
+	String getSelfName() {
+		return this.SelfName;
+	}
+
+	File getParentFile() {
+		return this.parentFile;
 	}
 }
