@@ -81,6 +81,7 @@ class Login extends JFrame implements Flag
 
 		private Boolean loginClientWindow()
 		{
+			// 在此处获得自己的名字
 			s.setSelfName(username);
 			ClientWindow clientWindow = new ClientWindow(s);
 			clientWindow.addWindowListener(new WindowAdapter()
