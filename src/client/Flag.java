@@ -1,6 +1,7 @@
-// package client;
+package client;
 
-public interface Flag {
+public interface Flag
+{
 	final int LOGIN = 1;
 	final int SIGNUP = 2;
 

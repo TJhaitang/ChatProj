@@ -1,14 +1,13 @@
 package client;
 
-import server.Flag;
+// import server.Flag;
 
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalIconFactory;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.rmi.server.ServerCloneException;
 import java.util.Vector;
 import java.util.function.Predicate;
 
@@ -19,6 +18,7 @@ class ClientWindow extends JFrame implements Flag
 
 	Vector<FriendWindow> friendWindows = new Vector<>();
 	private final ServerConnection sc;
+	ClientWindow cw = this;
 
 	ClientWindow(ServerConnection sc)
 	{
@@ -53,9 +53,9 @@ class ClientWindow extends JFrame implements Flag
 				tabbedPane.setCursor(Cursor.getDefaultCursor());
 			}
 		});
-		//最后把选项卡放入frame
+		// 最后把选项卡放入frame
 		this.add(tabbedPane, BorderLayout.CENTER);
-//		new Thread(new C()).start();
+		// new Thread(new C()).start();
 		this.setBounds(100, 100, 400, 800);
 		this.setVisible(true);
 		this.setLayout(null);
@@ -70,8 +70,7 @@ class ClientWindow extends JFrame implements Flag
 		BufferedReader br;
 		try
 		{
-			br = new BufferedReader(
-					new FileReader(System.getProperty("user.dir") + "/src/client/users/admin/friendList.txt"));
+			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), "admin/friendList.txt")));// 文件路径调用前面的，尽量不要重新写
 			String tmp;
 			while ((tmp = br.readLine()) != null)
 			{
@@ -79,13 +78,17 @@ class ClientWindow extends JFrame implements Flag
 				friendPane.add(panel);
 			}
 			br.close();
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}
 		JScrollPane friendScrollPane = new JScrollPane(friendPane);
 		tabbedPane.addTab("好友列表", friendPaneIcon, friendScrollPane, "这里有你和所有好友聊天的信息");
+	}
+
+	public void deleteWindow(String ID)
+	{
+
 	}
 
 	protected JComponent createFriendPanel(String text)
@@ -101,10 +104,10 @@ class ClientWindow extends JFrame implements Flag
 			public void mouseClicked(MouseEvent e)
 			{
 
-				friendWindows.add(new FriendWindow(sc, text));
+				friendWindows.add(new FriendWindow(sc, text, cw));
 				// TODO 处理不够完善；可考虑使用定时器定期清理vector
-				friendWindows.removeIf(friendWindow->!friendWindow.isVisible());
-				System.out.println(friendWindows.size());
+				friendWindows.removeIf(friendWindow -> !friendWindow.isVisible());
+				// System.out.println(friendWindows.size());
 			}
 
 			@Override
@@ -133,13 +136,13 @@ class ClientWindow extends JFrame implements Flag
 		});
 		return panel;
 	}
-//	private class C implements Runnable
-//	{
-//
-//		@Override
-//		public void run()
-//		{
-//
-//		}
-//	}
+	// private class C implements Runnable
+	// {
+	//
+	// @Override
+	// public void run()
+	// {
+	//
+	// }
+	// }
 }

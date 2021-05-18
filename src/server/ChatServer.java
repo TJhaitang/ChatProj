@@ -33,8 +33,7 @@ public class ChatServer
 				Login NewClinet = new Login(t);
 				new Thread(NewClinet).start();// 建立线程实现多用户使用
 			}
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}
@@ -63,7 +62,7 @@ public class ChatServer
 					sign = t.getMsgFromClient().readInt();// 接收登录or注册信号:登录1，注册2
 					username = t.getMsgFromClient().readUTF();
 					password = t.getMsgFromClient().readUTF();
-					// 为了我们的文件目录统一，使用getProperty得到项目目录
+					// 为了我们的文件目录统一，使用getProperty得到项目目录——这里用相对目录就可以了
 					File user = new File(
 							System.getProperty("user.dir") + "/src/server/users/" + username + "/userinfo.txt");
 					if (sign == Flag.LOGIN)
@@ -106,13 +105,12 @@ public class ChatServer
 						BufferedWriter bw = new BufferedWriter(new FileWriter(user));
 						bw.write(password);
 						bw.close();
-						CreateNewUser(parent);
+						CreateNewUser(parent);// 创建用户文件夹
 						t.getMsgToClient().writeInt(Flag.SUCCESS);
 						continue;
 					}
 
-				}
-				catch (IOException e)
+				} catch (IOException e)
 				{
 					System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":退出");
 					return;
@@ -163,8 +161,7 @@ class TargetConnection
 			MsgToClient = new DataOutputStream(MsgSocket.getOutputStream());
 			FileFromClient = new DataInputStream(FileSocket.getInputStream());
 			FileToClient = new DataOutputStream(FileSocket.getOutputStream());
-		}
-		catch (IOException e2)
+		} catch (IOException e2)
 		{
 			e2.printStackTrace();
 		}
@@ -179,8 +176,7 @@ class TargetConnection
 			MsgToClient.writeInt(rand);
 			FileToClient.writeInt(rand);
 			tip = MsgFromClient.readInt();
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}

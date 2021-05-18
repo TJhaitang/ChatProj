@@ -1,6 +1,6 @@
 package client;
 
-import server.Flag;
+// import server.Flag;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -32,6 +32,8 @@ abstract class ChatWindow extends JFrame implements Flag
 
 	protected ServerConnection s;
 	protected String Target;
+
+	protected ClientWindow cw;
 
 	ChatWindow()
 	{
@@ -92,20 +94,19 @@ abstract class ChatWindow extends JFrame implements Flag
 		buttonPanel_text.setBounds(650, 355, 35, 98);
 		this.add(buttonPanel_text);
 
-		this.addWindowListener(new WindowAdapter()
-		{
-			public void windowClosing(WindowEvent e)
-			{
-				System.exit(0);
-			}
-		});
+		// this.addWindowListener(new WindowAdapter() {
+		// public void windowClosing(WindowEvent e) {
+		// System.exit(0);
+		// }
+		// });
 	}
 
-	ChatWindow(ServerConnection s, String tar)
+	ChatWindow(ServerConnection s, String tar, ClientWindow cw)
 	{
 		this();
 		this.s = s;
 		this.Target = tar;
+		this.cw = cw;
 	}
 
 	public void AddMessage(String msg)
@@ -119,8 +120,7 @@ abstract class ChatWindow extends JFrame implements Flag
 			{
 				document.insertString(document.getLength(), name + "  " + ss[0] + "\n" + ss[3] + "\n", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-			}
-			catch (BadLocationException e)
+			} catch (BadLocationException e)
 			{
 				e.printStackTrace();
 			}
@@ -131,8 +131,7 @@ abstract class ChatWindow extends JFrame implements Flag
 			{
 				document.insertString(document.getLength(), name + "  " + ss[0] + "\n" + ss[3] + "\n", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-			}
-			catch (BadLocationException e)
+			} catch (BadLocationException e)
 			{
 				e.printStackTrace();
 			}
@@ -168,30 +167,31 @@ class FriendWindow extends ChatWindow
 {
 	String friendName;// 换一下，换到父类里面去
 
-	public static void main(String[] args)
-	{
-		ServerConnection s = new ServerConnection();
-		s.setSelfName("admin");
-		new FriendWindow(s, "secondPerson");
+	// public static void main(String[] args) {
+	// ServerConnection s = new ServerConnection();
+	// s.setSelfName("admin");
+	// new FriendWindow(s, "secondPerson");
 
-	}
+	// }
 
-	FriendWindow(ServerConnection s, String friendName)
+	FriendWindow(ServerConnection s, String friendName, ClientWindow cw)
 	{// 构造函数，完成消息的展示即可，同步在上线时与用户界面完成
-		super(s, friendName);
+		super(s, friendName, cw);
 		this.friendName = friendName;
 		this.setTitle(friendName);
 
 		display();
 		this.setVisible(true);
 	}
-	//不能删，不然就关闭全部窗口了
+
+	// 不能删，不然就关闭全部窗口了
 	protected void processWindowEvent(WindowEvent e)
 	{
 		if (e.getID() == WindowEvent.WINDOW_CLOSING)
 		{
 
 			this.dispose();
+			cw.deleteWindow(Target);// 对于好友来说，T为好友名；对于群组，T为群组ID
 		} else
 		{
 			super.processWindowEvent(e);
@@ -201,21 +201,18 @@ class FriendWindow extends ChatWindow
 	@Override
 	void display()
 	{// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
-		File chatRecord =
-				new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + friendName + ".txt");// 此文件在加好友时创建,文件路径记得改
+		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + friendName + ".txt");// 此文件在加好友时创建,文件路径记得改
 		BufferedReader br = null;
 		try
 		{
 			br = new BufferedReader(new FileReader(chatRecord));
-		}
-		catch (FileNotFoundException e)
+		} catch (FileNotFoundException e)
 		{
 			JOptionPane.showMessageDialog(this, "消息记录不存在！");
 			try
 			{
 				chatRecord.createNewFile();
-			}
-			catch (IOException ioException)
+			} catch (IOException ioException)
 			{
 				ioException.printStackTrace();
 			}
@@ -229,8 +226,7 @@ class FriendWindow extends ChatWindow
 				AddMessage(str);
 			}
 			br.close();
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}
@@ -253,8 +249,7 @@ class FriendWindow extends ChatWindow
 			pw.println(str);
 			pw.close();
 			// }
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}
