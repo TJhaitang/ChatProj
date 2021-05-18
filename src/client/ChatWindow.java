@@ -8,7 +8,6 @@ import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -120,7 +119,8 @@ abstract class ChatWindow extends JFrame implements Flag
 			{
 				document.insertString(document.getLength(), name + "  " + ss[0] + "\n" + ss[3] + "\n", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-			} catch (BadLocationException e)
+			}
+			catch (BadLocationException e)
 			{
 				e.printStackTrace();
 			}
@@ -131,7 +131,8 @@ abstract class ChatWindow extends JFrame implements Flag
 			{
 				document.insertString(document.getLength(), name + "  " + ss[0] + "\n" + ss[3] + "\n", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-			} catch (BadLocationException e)
+			}
+			catch (BadLocationException e)
 			{
 				e.printStackTrace();
 			}
@@ -201,18 +202,21 @@ class FriendWindow extends ChatWindow
 	@Override
 	void display()
 	{// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
-		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + friendName + ".txt");// 此文件在加好友时创建,文件路径记得改
+		File chatRecord =
+				new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + friendName + ".txt");// 此文件在加好友时创建,文件路径记得改
 		BufferedReader br = null;
 		try
 		{
 			br = new BufferedReader(new FileReader(chatRecord));
-		} catch (FileNotFoundException e)
+		}
+		catch (FileNotFoundException e)
 		{
 			JOptionPane.showMessageDialog(this, "消息记录不存在！");
 			try
 			{
 				chatRecord.createNewFile();
-			} catch (IOException ioException)
+			}
+			catch (IOException ioException)
 			{
 				ioException.printStackTrace();
 			}
@@ -226,7 +230,8 @@ class FriendWindow extends ChatWindow
 				AddMessage(str);
 			}
 			br.close();
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
@@ -249,7 +254,8 @@ class FriendWindow extends ChatWindow
 			pw.println(str);
 			pw.close();
 			// }
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}

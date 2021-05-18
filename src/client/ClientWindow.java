@@ -1,41 +1,44 @@
 package client;
 
-// import server.Flag;
-
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalIconFactory;
 import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.rmi.server.ServerCloneException;
-import java.util.Vector;
-import java.util.function.Predicate;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
 
 // 传进用户ID，用s连接到服务器,创建界面（做按钮、界面列表、个人信息、朋友圈入口）
 // 按钮连接到聊天框、朋友圈界面
 class ClientWindow extends JFrame implements Flag
 {
 
-	Vector<FriendWindow> friendWindows = new Vector<>();
+	HashMap<String, FriendWindow> friendWindows = new HashMap<>();
 	private final ServerConnection sc;
 	ClientWindow cw = this;
 
 	ClientWindow(ServerConnection sc)
 	{
 		this.sc = sc;
+		// 接受服务器消息
 
+		// 创建选项卡
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
 		tabbedPane.setPreferredSize(new Dimension(300, 300));
 		tabbedPane.setBorder(null);
 		tabbedPane.setBackground(Color.white);
 		tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		// 创建整个好友列表
-		createFriendsScrollPanel(tabbedPane);
-		JScrollPane groupScrollPane = new JScrollPane();
-		Icon groupPaneIcon = new MetalIconFactory.TreeLeafIcon();
-		tabbedPane.addTab("群组列表", groupPaneIcon, groupScrollPane, "这里有你所有群组的信息");
-		tabbedPane.addTab("空间", null, null, "朋友圈");
-		tabbedPane.setEnabledAt(2, true);
+//		createScrollPanel(tabbedPane, Flag.RECENTPANE);
+		createScrollPanel(tabbedPane, Flag.FRIENDPANE);
+		createScrollPanel(tabbedPane, Flag.GROUPPANE);
+//		createScrollPanel(tabbedPane, Flag.PYQ);
+
+		tabbedPane.setEnabledAt(1, true);
 		tabbedPane.setSelectedIndex(0);
 		tabbedPane.addMouseListener(new MouseAdapter()
 		{
@@ -62,15 +65,38 @@ class ClientWindow extends JFrame implements Flag
 		this.setResizable(true);
 	}
 
-	private void createFriendsScrollPanel(JTabbedPane tabbedPane)
+	private void createScrollPanel(JTabbedPane tabbedPane, int id)
 	{
-		Icon friendPaneIcon = new MetalIconFactory.TreeControlIcon(true);
+		switch (id)
+		{
+			case FRIENDPANE -> {
+				createPane(tabbedPane, new MetalIconFactory.TreeControlIcon(true),
+				           "friendList.txt", "好友列表", "这里有你和所有好友聊天的信息");
+			}
+			case GROUPPANE -> {
+				createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(),
+				           "groupList.txt", "群组列表", "这里有你和所有好友聊天的信息");
+			}
+			case PYQ -> {
+				createPane(tabbedPane, new MetalIconFactory.FolderIcon16(),
+				           "friendList.txt", "朋友圈", "这里有你和所有群组的信息");
+			}
+			case RECENTPANE -> {
+				createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(),
+				           "", "最近消息", "这里有你和所有最近聊天的信息");
+			}
+		}
+	}
+
+	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip)
+	{
 		JPanel friendPane = new JPanel();
 		friendPane.setLayout(new GridLayout(20, 1));
 		BufferedReader br;
 		try
 		{
-			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), "admin/friendList.txt")));// 文件路径调用前面的，尽量不要重新写
+			br = new BufferedReader(
+					new FileReader(new File(sc.getParentFile(), "admin/" + list)));// 文件路径调用前面的，尽量不要重新写
 			String tmp;
 			while ((tmp = br.readLine()) != null)
 			{
@@ -78,17 +104,19 @@ class ClientWindow extends JFrame implements Flag
 				friendPane.add(panel);
 			}
 			br.close();
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
-		JScrollPane friendScrollPane = new JScrollPane(friendPane);
-		tabbedPane.addTab("好友列表", friendPaneIcon, friendScrollPane, "这里有你和所有好友聊天的信息");
+		JScrollPane scrollPane = new JScrollPane(friendPane);
+		tabbedPane.addTab(title, paneIcon, scrollPane, tip);
 	}
 
 	public void deleteWindow(String ID)
 	{
-
+		friendWindows.remove(ID);
+		System.out.println(friendWindows.size());
 	}
 
 	protected JComponent createFriendPanel(String text)
@@ -103,11 +131,13 @@ class ClientWindow extends JFrame implements Flag
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
-
-				friendWindows.add(new FriendWindow(sc, text, cw));
-				// TODO 处理不够完善；可考虑使用定时器定期清理vector
-				friendWindows.removeIf(friendWindow -> !friendWindow.isVisible());
-				// System.out.println(friendWindows.size());
+				if (friendWindows.containsKey(text))
+				{
+					friendWindows.get(text).setVisible(true);
+				} else
+				{
+					friendWindows.put(text, new FriendWindow(sc, text, cw));
+				}
 			}
 
 			@Override
@@ -136,13 +166,21 @@ class ClientWindow extends JFrame implements Flag
 		});
 		return panel;
 	}
-	// private class C implements Runnable
-	// {
-	//
-	// @Override
-	// public void run()
-	// {
-	//
-	// }
-	// }
+
+	class HandleASession implements Runnable
+	{// 在这里实现信息交互
+		ServerConnection s;
+
+		HandleASession(ServerConnection s)
+		{
+			this.s = s;
+		}
+
+		@Override
+		public void run()
+		{
+
+		}
+	}
+
 }

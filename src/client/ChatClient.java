@@ -1,13 +1,13 @@
 package client;
 
-// import server.Flag;
-
 import javax.swing.*;
-
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
-import java.net.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
 
 public class ChatClient
 {
@@ -25,7 +25,8 @@ public class ChatClient
 		{
 			MsgSocket = new Socket("localhost", 12138);// 建立连接
 			FileSocket = new Socket("localhost", 12138);
-		} catch (Exception e)
+		}
+		catch (Exception e)
 		{
 			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
 			System.exit(0);
@@ -49,7 +50,7 @@ public class ChatClient
 
 class Login extends JFrame implements Flag
 {
-	private final Login lg;
+	private Login lg;
 
 	private final ServerConnection s;
 
@@ -61,16 +62,16 @@ class Login extends JFrame implements Flag
 	private JLabel label2 = new JLabel("password");
 	private JButton loginButton = new JButton("登录");
 	private JButton SigninButton = new JButton("注册");
-	private JTextArea usernameTextArea = new JTextArea();
+	private final JTextArea usernameTextArea = new JTextArea();
 	private final JPasswordField passwordField = new JPasswordField();
 
 	private int IsSending = 0;
 
 	private class sendMesg implements Runnable
 	{
-		private String username;
-		private String password;
-		private int met;
+		private final String username;
+		private final String password;
+		private final int met;
 
 		sendMesg(String str1, String str2, int met)
 		{
@@ -94,7 +95,7 @@ class Login extends JFrame implements Flag
 
 			});
 
-			clientWindow.setBounds(600, 100, 400, 800);
+			clientWindow.setBounds(1500, 100, 400, 800);
 			clientWindow.setVisible(true);
 			clientWindow.setLayout(null);
 			clientWindow.setResizable(true);
@@ -121,7 +122,7 @@ class Login extends JFrame implements Flag
 							// JOptionPane.showMessageDialog(lg, "没问题");
 						} else
 						{
-							JOptionPane.showMessageDialog(lg, "登录失败");// 这里怎么用?
+							JOptionPane.showMessageDialog(lg, "登录失败");
 						}
 					} else if (check == Flag.FAIL)
 					{
@@ -139,7 +140,8 @@ class Login extends JFrame implements Flag
 					}
 				}
 
-			} catch (IOException e)
+			}
+			catch (IOException e)
 			{
 				e.printStackTrace();
 			}
@@ -177,19 +179,20 @@ class Login extends JFrame implements Flag
 					return;
 				}
 				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-						|| passwordField.getPassword().length == 0)
+				    || passwordField.getPassword().length == 0)
 				{
 					return;
 				}
 				try
 				{
 					s.getMsgToServer().writeInt(1);
-				} catch (IOException e1)
+				}
+				catch (IOException e1)
 				{
 					e1.printStackTrace();
 				}
 				sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-						String.valueOf(passwordField.getPassword()), 1);
+				                                  String.valueOf(passwordField.getPassword()), 1);
 				new Thread(messenger).start();
 			}
 		});
@@ -204,19 +207,20 @@ class Login extends JFrame implements Flag
 					return;
 				}
 				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-						|| passwordField.getPassword().length == 0)
+				    || passwordField.getPassword().length == 0)
 				{
 					return;
 				}
 				try
 				{
 					s.getMsgToServer().writeInt(2);
-				} catch (IOException e1)
+				}
+				catch (IOException e1)
 				{
 					e1.printStackTrace();
 				}
 				sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-						String.valueOf(passwordField.getPassword()), 2);
+				                                  String.valueOf(passwordField.getPassword()), 2);
 				new Thread(messenger).start();
 			}
 		});
@@ -235,19 +239,20 @@ class Login extends JFrame implements Flag
 						return;
 					}
 					if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-							|| passwordField.getPassword().length == 0)
+					    || passwordField.getPassword().length == 0)
 					{
 						return;
 					}
 					try
 					{
 						s.getMsgToServer().writeInt(1);
-					} catch (IOException e1)
+					}
+					catch (IOException e1)
 					{
 						e1.printStackTrace();
 					}
 					sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-							String.valueOf(passwordField.getPassword()), 1);
+					                                  String.valueOf(passwordField.getPassword()), 1);
 					new Thread(messenger).start();
 				}
 			}
@@ -265,6 +270,7 @@ class Login extends JFrame implements Flag
 		this.setSize(300, 150);
 		this.setLocation(600, 300);
 
+		this.lg = this;
 		this.setTitle("登录");
 
 		this.addWindowListener(new WindowAdapter()
@@ -289,7 +295,8 @@ class ServerConnection
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
-	private final File parentFile = new File("users");// 怎么获取当前代码文件的路径？,此路径指到当前代码所在文件夹
+	private final File parentFile = new File(System.getProperty("user.dir") + "/src/client/users");
+// 怎么获取当前代码文件的路径？,此路径指到当前代码所在文件夹
 
 	ServerConnection()
 	{
@@ -306,9 +313,10 @@ class ServerConnection
 			MsgToServer = new DataOutputStream(MsgSocket.getOutputStream());
 			FileFromServer = new DataInputStream(FileSocket.getInputStream());
 			FileToServer = new DataOutputStream(FileSocket.getOutputStream());
-		} catch (IOException e2)
+		}
+		catch (IOException e)
 		{
-			e2.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 
@@ -328,7 +336,8 @@ class ServerConnection
 				tip = Flag.FAIL;
 				MsgToServer.writeInt(Flag.FAIL);
 			}
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}

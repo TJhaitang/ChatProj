@@ -33,7 +33,8 @@ public class ChatServer
 				Login NewClinet = new Login(t);
 				new Thread(NewClinet).start();// 建立线程实现多用户使用
 			}
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
@@ -49,14 +50,13 @@ public class ChatServer
 		}
 
 		@Override
-
 		public void run()
 		{
+			int sign;
+			String username;
+			String password;
 			while (true)
 			{
-				int sign;
-				String username;
-				String password;
 				try
 				{// 从用户端接收登录信息
 					sign = t.getMsgFromClient().readInt();// 接收登录or注册信号:登录1，注册2
@@ -107,10 +107,10 @@ public class ChatServer
 						bw.close();
 						CreateNewUser(parent);// 创建用户文件夹
 						t.getMsgToClient().writeInt(Flag.SUCCESS);
-						continue;
 					}
 
-				} catch (IOException e)
+				}
+				catch (IOException e)
 				{
 					System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":退出");
 					return;
@@ -161,7 +161,8 @@ class TargetConnection
 			MsgToClient = new DataOutputStream(MsgSocket.getOutputStream());
 			FileFromClient = new DataInputStream(FileSocket.getInputStream());
 			FileToClient = new DataOutputStream(FileSocket.getOutputStream());
-		} catch (IOException e2)
+		}
+		catch (IOException e2)
 		{
 			e2.printStackTrace();
 		}
@@ -176,7 +177,8 @@ class TargetConnection
 			MsgToClient.writeInt(rand);
 			FileToClient.writeInt(rand);
 			tip = MsgFromClient.readInt();
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
