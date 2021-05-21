@@ -95,7 +95,8 @@ class Login extends JFrame implements Flag
 
 			});
 
-			clientWindow.setBounds(1500, 100, 400, 800);
+			Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+			clientWindow.setBounds(screen.width - 500, (screen.height - 800) / 2, 400, 800);
 			clientWindow.setVisible(true);
 			clientWindow.setLayout(null);
 			clientWindow.setResizable(true);

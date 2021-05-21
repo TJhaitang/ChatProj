@@ -120,7 +120,15 @@ public class ChatServer
 
 		private void CreateNewUser(File f)
 		{// 新建用户的文件格式在这里声明，目前已有userinfo
-
+			try
+			{
+				new File(f.getAbsolutePath() + "/groupList.txt").createNewFile();
+				new File(f.getAbsolutePath() + "/friendList.txt").createNewFile();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 
