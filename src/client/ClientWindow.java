@@ -6,10 +6,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 
 // 传进用户ID，用s连接到服务器,创建界面（做按钮、界面列表、个人信息、朋友圈入口）
@@ -179,7 +176,61 @@ class ClientWindow extends JFrame implements Flag
 		@Override
 		public void run()
 		{
+			String message;
+			while (true)
+			{
+				try
+				{
+					int sign = s.getMsgFromServer().readInt();
+					switch (sign)
+					{
+						case SENDFILE -> {
 
+//							message = s.getFileFromServer().readNBytes();
+						}
+						case SENDTEXT -> {
+							message = s.getMsgFromServer().readUTF();
+							String[] split = message.split("\\|");
+							// 若为已打开窗口则写入窗口中
+							if (friendWindows.containsKey(split[1]))
+							{
+								friendWindows.get(split[1]).AddMessage(message);
+							}
+							// 写入本地文件
+							File chatRecord =
+									new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
+							PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+							pw.println(message);
+							pw.close();
+							// 写入用户主窗口
+						}
+						// 收到请求加好友的信息
+						case ADDFRIEND -> {
+
+						}
+						// 收到同意加好友的信息
+						case ACCEPTFRIEND -> {
+
+						}
+						case CREATEGROUP -> {
+
+						}
+						case DELETEFRIEND -> {
+
+						}
+						case DELETEGROUP -> {
+
+						}
+						case QUITGROUP -> {
+
+						}
+					}
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 

@@ -12,12 +12,13 @@ public interface Flag
 	final int SENDTEXT = 4;
 
 	final int ADDFRIEND = 5;
+	final int ACCEPTFRIEND = 15;
 	final int CREATEGROUP = 6;
 	final int DELETEFRIEND = 7;
 	final int DELETEGROUP = 8;
 	final int QUITGROUP = 9;
 
-	final int FRIENDPANE = 10;
+	final int FRIENDPANE = 14;
 	final int GROUPPANE = 11;
 	final int PYQ = 12;
 	final int RECENTPANE = 13;
