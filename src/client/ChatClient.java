@@ -9,46 +9,37 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 
-public class ChatClient
-{
+public class ChatClient {
 	private Socket MsgSocket;
 	private Socket FileSocket;
 
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 		new ChatClient();
 	}
 
-	ChatClient()
-	{
-		try
-		{
+	ChatClient() {
+		try {
 			MsgSocket = new Socket("192.168.43.148", 12138);// 建立连接
 			FileSocket = new Socket("192.168.43.148", 12138);
-		} catch (Exception e)
-		{
+		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
 			System.exit(0);
 		}
 		ServerConnection s = new ServerConnection(MsgSocket, FileSocket);
-		if (!s.check())
-		{
+		if (!s.check()) {
 			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
 			System.exit(0);
 		}
 		Login lg = new Login(s);
-		lg.addWindowListener(new WindowAdapter()
-		{
-			public void windowClosing(WindowEvent e)
-			{
+		lg.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
 				System.exit(0);
 			}
 		});
 	}
 }
 
-class Login extends JFrame implements Flag
-{
+class Login extends JFrame implements Flag {
 	private Login lg;
 
 	private final ServerConnection s;
@@ -66,29 +57,24 @@ class Login extends JFrame implements Flag
 
 	private int IsSending = 0;
 
-	private class sendMesg implements Runnable
-	{
+	private class sendMesg implements Runnable {
 		private final String username;
 		private final String password;
 		private final int met;
 
-		sendMesg(String str1, String str2, int met)
-		{
+		sendMesg(String str1, String str2, int met) {
 			this.username = str1;
 			this.password = str2;
 			this.met = met;
 		}
 
-		private Boolean loginClientWindow()
-		{
+		private Boolean loginClientWindow() {
 			// 在此处获得自己的名字
 			s.setSelfName(username);
 			ClientWindow clientWindow = new ClientWindow(s);
-			clientWindow.addWindowListener(new WindowAdapter()
-			{
+			clientWindow.addWindowListener(new WindowAdapter() {
 				@Override
-				public void windowClosing(WindowEvent e)
-				{
+				public void windowClosing(WindowEvent e) {
 					System.exit(0);
 				}
 
@@ -103,74 +89,58 @@ class Login extends JFrame implements Flag
 		}
 
 		@Override
-		public void run()
-		{
+		public void run() {
 			IsSending = 1;
-			try
-			{
+			try {
 				s.getMsgToServer().writeUTF(username);
 				s.getMsgToServer().writeUTF(password);
 				int check = s.getMsgFromServer().readInt();
 
-				if (met == Flag.LOGIN)
-				{
-					if (check == Flag.SUCCESS)
-					{// 登陆成功
-						if (loginClientWindow())
-						{
+				if (met == Flag.LOGIN) {
+					if (check == Flag.SUCCESS) {// 登陆成功
+						if (loginClientWindow()) {
 							lg.setVisible(false);
 							// JOptionPane.showMessageDialog(lg, "没问题");
-						} else
-						{
+						} else {
 							JOptionPane.showMessageDialog(lg, "登录失败");
 						}
-					} else if (check == Flag.FAIL)
-					{
+					} else if (check == Flag.FAIL) {
 						JOptionPane.showMessageDialog(lg, "用户名或密码错误");
 					}
-				} else if (met == Flag.SIGNUP)
-				{
-					if (check == Flag.SUCCESS)
-					{
+				} else if (met == Flag.SIGNUP) {
+					if (check == Flag.SUCCESS) {
 						// 创建文件
 						createNewUser(username);
 						JOptionPane.showMessageDialog(lg, "注册成功");
 
-					} else if (check == Flag.FAIL)
-					{
+					} else if (check == Flag.FAIL) {
 						JOptionPane.showMessageDialog(lg, "用户已存在");
 					}
 				}
 
-			} catch (IOException e)
-			{
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			IsSending = 0;
 		}
 	}
 
-	private void createNewUser(String name)
-	{
+	private void createNewUser(String name) {
 		File user = new File(System.getProperty("user.dir") + "/src/client/users/" + name);
-		if (user.mkdir())
-		{
-			try
-			{
+		if (user.mkdir()) {
+			try {
 				new File(user.getAbsolutePath() + "/config.txt").createNewFile();
 				new File(user.getAbsolutePath() + "/friendList.txt").createNewFile();
 				new File(user.getAbsolutePath() + "/groupList.txt").createNewFile();
 				new File(user.getAbsolutePath() + "/groupMsg").mkdir();
 				new File(user.getAbsolutePath() + "/friendMsg").mkdir();
-			} catch (IOException e)
-			{
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
-	Login(ServerConnection s)
-	{
+	Login(ServerConnection s) {
 		this.s = s;
 		this.lg = this;
 
@@ -188,26 +158,20 @@ class Login extends JFrame implements Flag
 		textPanel.add(passwordPanel);
 		textPanel.setSize(100, 50);
 
-		loginButton.addActionListener(new ActionListener()
-		{
+		loginButton.addActionListener(new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent e)
-			{
+			public void actionPerformed(ActionEvent e) {
 
-				if (IsSending == 1)
-				{
+				if (IsSending == 1) {
 					return;
 				}
 				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-						|| passwordField.getPassword().length == 0)
-				{
+						|| passwordField.getPassword().length == 0) {
 					return;
 				}
-				try
-				{
+				try {
 					s.getMsgToServer().writeInt(1);
-				} catch (IOException e1)
-				{
+				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
 				sendMesg messenger = new sendMesg(usernameTextArea.getText(),
@@ -216,25 +180,19 @@ class Login extends JFrame implements Flag
 			}
 		});
 
-		SigninButton.addActionListener(new ActionListener()
-		{
+		SigninButton.addActionListener(new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				if (IsSending == 1)
-				{
+			public void actionPerformed(ActionEvent e) {
+				if (IsSending == 1) {
 					return;
 				}
 				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-						|| passwordField.getPassword().length == 0)
-				{
+						|| passwordField.getPassword().length == 0) {
 					return;
 				}
-				try
-				{
+				try {
 					s.getMsgToServer().writeInt(2);
-				} catch (IOException e1)
-				{
+				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
 				sendMesg messenger = new sendMesg(usernameTextArea.getText(),
@@ -243,29 +201,22 @@ class Login extends JFrame implements Flag
 			}
 		});
 
-		passwordField.addKeyListener(new KeyAdapter()
-		{
+		passwordField.addKeyListener(new KeyAdapter() {
 			@Override
-			public void keyPressed(KeyEvent e)
-			{
+			public void keyPressed(KeyEvent e) {
 				// System.out.println("??????????");
 				super.keyPressed(e);
-				if (e.getKeyCode() == KeyEvent.VK_ENTER)
-				{
-					if (IsSending == 1)
-					{
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					if (IsSending == 1) {
 						return;
 					}
 					if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-							|| passwordField.getPassword().length == 0)
-					{
+							|| passwordField.getPassword().length == 0) {
 						return;
 					}
-					try
-					{
+					try {
 						s.getMsgToServer().writeInt(1);
-					} catch (IOException e1)
-					{
+					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
 					sendMesg messenger = new sendMesg(usernameTextArea.getText(),
@@ -290,11 +241,9 @@ class Login extends JFrame implements Flag
 		this.lg = this;
 		this.setTitle("登录");
 
-		this.addWindowListener(new WindowAdapter()
-		{
+		this.addWindowListener(new WindowAdapter() {
 
-			public void windowClosing(WindowEvent e)
-			{
+			public void windowClosing(WindowEvent e) {
 				System.exit(0);
 			}
 		});
@@ -303,8 +252,7 @@ class Login extends JFrame implements Flag
 	}
 }
 
-class ServerConnection
-{
+class ServerConnection {
 	private String SelfName;
 	private Socket MsgSocket;
 	private Socket FileSocket;
@@ -312,85 +260,69 @@ class ServerConnection
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
-	private final File parentFile = new File(System.getProperty("user.dir") + "/users");
+	private final File parentFile = new File(System.getProperty("user.dir") + "/src/client/users");
 	// 怎么获取当前代码文件的路径？,此路径指到当前代码所在文件夹
 
-	ServerConnection()
-	{
+	ServerConnection() {
 	}
 
-	ServerConnection(Socket msg, Socket file)
-	{
+	ServerConnection(Socket msg, Socket file) {
 		System.out.println(parentFile.getAbsolutePath());
 		this.MsgSocket = msg;
 		this.FileSocket = file;
-		try
-		{
+		try {
 			MsgFromServer = new DataInputStream(MsgSocket.getInputStream());
 			MsgToServer = new DataOutputStream(MsgSocket.getOutputStream());
 			FileFromServer = new DataInputStream(FileSocket.getInputStream());
 			FileToServer = new DataOutputStream(FileSocket.getOutputStream());
-		} catch (IOException e)
-		{
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	boolean check()
-	{// 判断两个Socket是否连接到同一个用户
+	boolean check() {// 判断两个Socket是否连接到同一个用户
 		int tip = Flag.FAIL;
-		try
-		{
+		try {
 			int a = MsgFromServer.readInt();
 			int b = FileFromServer.readInt();
-			if (a == b)
-			{
+			if (a == b) {
 				tip = Flag.SUCCESS;
 				MsgToServer.writeInt(Flag.SUCCESS);
-			} else
-			{
+			} else {
 				tip = Flag.FAIL;
 				MsgToServer.writeInt(Flag.FAIL);
 			}
-		} catch (IOException e)
-		{
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return (tip == Flag.SUCCESS);
 	}
 
-	DataInputStream getMsgFromServer()
-	{
+	DataInputStream getMsgFromServer() {
 		return MsgFromServer;
 	}
 
-	DataOutputStream getMsgToServer()
-	{
+	DataOutputStream getMsgToServer() {
 		return MsgToServer;
 	}
 
-	DataInputStream getFileFromServer()
-	{
+	DataInputStream getFileFromServer() {
 		return FileFromServer;
 	}
 
-	DataOutputStream getFileToServer()
-	{
+	DataOutputStream getFileToServer() {
 		return FileToServer;
 	}
 
-	void setSelfName(String s)
-	{
+	void setSelfName(String s) {
 		this.SelfName = s;
 	}
 
-	String getSelfName()
-	{
+	String getSelfName() {
 		return this.SelfName;
 	}
 
-	File getParentFile()
-	{
+	File getParentFile() {
 		return this.parentFile;
 	}
 }
