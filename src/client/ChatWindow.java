@@ -1,4 +1,4 @@
-package client;
+// package client;
 
 // import server.Flag;
 
@@ -108,7 +108,7 @@ abstract class ChatWindow extends JFrame implements Flag
 		this.cw = cw;
 	}
 
-	public void AddMessage(String msg)
+	public void AddMessage(String msg)// msg为与服务器交互的标准模式，该函数将此信息打印到屏幕上
 	{// 在这里实现信息的展示,0为在最上方插入，1为在最下方
 		String[] ss = msg.split("\\|");
 		String name = ss[1];// 记得改
@@ -119,8 +119,7 @@ abstract class ChatWindow extends JFrame implements Flag
 			{
 				document.insertString(document.getLength(), name + "  " + ss[0] + "\n" + ss[3] + "\n", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-			}
-			catch (BadLocationException e)
+			} catch (BadLocationException e)
 			{
 				e.printStackTrace();
 			}
@@ -131,8 +130,7 @@ abstract class ChatWindow extends JFrame implements Flag
 			{
 				document.insertString(document.getLength(), name + "  " + ss[0] + "\n" + ss[3] + "\n", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-			}
-			catch (BadLocationException e)
+			} catch (BadLocationException e)
 			{
 				e.printStackTrace();
 			}
@@ -166,7 +164,7 @@ abstract class ChatWindow extends JFrame implements Flag
 
 class FriendWindow extends ChatWindow
 {
-	String friendName;// 换一下，换到父类里面去
+	// String friendName;// 换一下，换到父类里面去
 
 	// public static void main(String[] args) {
 	// ServerConnection s = new ServerConnection();
@@ -178,9 +176,8 @@ class FriendWindow extends ChatWindow
 	FriendWindow(ServerConnection s, String friendName, ClientWindow cw)
 	{// 构造函数，完成消息的展示即可，同步在上线时与用户界面完成
 		super(s, friendName, cw);
-		this.friendName = friendName;
+		// this.friendName = friendName;
 		this.setTitle(friendName);
-
 		display();
 		this.setVisible(true);
 	}
@@ -202,21 +199,18 @@ class FriendWindow extends ChatWindow
 	@Override
 	void display()
 	{// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
-		File chatRecord =
-				new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + friendName + ".txt");// 此文件在加好友时创建,文件路径记得改
+		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + Target + ".txt");// 此文件在加好友时创建,文件路径记得改
 		BufferedReader br = null;
 		try
 		{
 			br = new BufferedReader(new FileReader(chatRecord));
-		}
-		catch (FileNotFoundException e)
+		} catch (FileNotFoundException e)
 		{
 			JOptionPane.showMessageDialog(this, "消息记录不存在！");
 			try
 			{
 				chatRecord.createNewFile();
-			}
-			catch (IOException ioException)
+			} catch (IOException ioException)
 			{
 				ioException.printStackTrace();
 			}
@@ -230,8 +224,7 @@ class FriendWindow extends ChatWindow
 				AddMessage(str);
 			}
 			br.close();
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}
@@ -243,19 +236,22 @@ class FriendWindow extends ChatWindow
 	{
 		try
 		{
-			// s.getMsgToServer().writeInt(Flag.SENDTEXT);
-			// s.getMsgToServer().writeUTF(str);
+			s.getMsgToServer().writeInt(Flag.SENDTEXT);
+			s.getMsgToServer().writeUTF(Target);
+			s.getMsgToServer().writeUTF(str);
+			int a = Flag.SUCCESS;
 			// int a = s.getMsgFromServer().readInt();
-			// if (a != Flag.SUCCESS) {
-			// JOptionPane.showMessageDialog(MsgList, "发送失败");
-			// } else {
-			File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + Target + ".txt");
-			PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-			pw.println(str);
-			pw.close();
-			// }
-		}
-		catch (IOException e)
+			if (a != Flag.SUCCESS)
+			{
+				JOptionPane.showMessageDialog(MsgList, "发送失败");
+			} else
+			{
+				File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + Target + ".txt");
+				PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+				pw.println(str);
+				pw.close();
+			}
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}

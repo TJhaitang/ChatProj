@@ -33,8 +33,7 @@ public class ChatServer
 				Login NewClinet = new Login(t);
 				new Thread(NewClinet).start();// 建立线程实现多用户使用
 			}
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}
@@ -109,8 +108,7 @@ public class ChatServer
 						t.getMsgToClient().writeInt(Flag.SUCCESS);
 					}
 
-				}
-				catch (IOException e)
+				} catch (IOException e)
 				{
 					System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":退出");
 					return;
@@ -124,8 +122,7 @@ public class ChatServer
 			{
 				new File(f.getAbsolutePath() + "/groupList.txt").createNewFile();
 				new File(f.getAbsolutePath() + "/friendList.txt").createNewFile();
-			}
-			catch (IOException e)
+			} catch (IOException e)
 			{
 				e.printStackTrace();
 			}
@@ -141,10 +138,99 @@ public class ChatServer
 			this.t = t;
 		}
 
+		private void SendMsg()// 发消息用不同函数实现可以么？是不是有点不优雅
+		{// 先直接发，后面写存文件待发送
+			String TargetName = null, Msg = null;
+			try
+			{
+				TargetName = t.getMsgFromClient().readUTF();
+				Msg = t.getMsgFromClient().readUTF();
+			} catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+			// String[] split = Msg.split("\\|");
+			if (isFriend(TargetName))
+			{
+				if (UserMap.containsKey(TargetName))
+				{
+					System.out.println("测试！");
+					TargetConnection t2 = UserMap.get(TargetName);
+					try
+					{
+						t2.getMsgToClient().writeInt(Flag.SENDTEXT);
+						t2.getMsgToClient().writeUTF(Msg);
+					} catch (IOException e)// 这里执行一下删map和存文件——按理说不应该不存在
+					{
+						e.printStackTrace();
+						try
+						{
+							t.getMsgToClient().writeInt(Flag.FAIL);
+						} catch (IOException e1)
+						{
+							e1.printStackTrace();
+						}
+						return;
+					}
+					try
+					{
+						t.getMsgToClient().writeInt(Flag.SUCCESS);
+					} catch (IOException e)
+					{
+						e.printStackTrace();
+					} // 再写一下fail的
+				} else
+				{
+					try
+					{
+						t.getMsgToClient().writeInt(Flag.FAIL);
+					} catch (IOException e)
+					{
+						e.printStackTrace();
+					}
+				}
+			} else
+			{
+
+			}
+		}
+
+		private boolean isFriend(String tar)// 判断这个目标是好友or群组
+		{
+			return true;
+		}
+
 		@Override
 		public void run()
 		{
-
+			while (true)
+			{
+				int sign;
+				try
+				{
+					sign = t.getMsgFromClient().readInt();
+					switch (sign)
+					{
+					case Flag.SENDTEXT:
+					{
+						SendMsg();
+						break;
+					}
+					case Flag.SENDFILE:/* 往下先等等 */
+					{
+						break;
+					}
+					default:
+						break;
+					}
+				} catch (IOException e)// 如果是收信者下线该怎么办？_写函数，别在这里实现逻辑
+				{
+					System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":退出");
+					// 从map中删掉
+					UserMap.remove(t.getUsername());
+					return;
+				}
+			}
 		}
 	}
 }
@@ -169,8 +255,7 @@ class TargetConnection
 			MsgToClient = new DataOutputStream(MsgSocket.getOutputStream());
 			FileFromClient = new DataInputStream(FileSocket.getInputStream());
 			FileToClient = new DataOutputStream(FileSocket.getOutputStream());
-		}
-		catch (IOException e2)
+		} catch (IOException e2)
 		{
 			e2.printStackTrace();
 		}
@@ -185,8 +270,7 @@ class TargetConnection
 			MsgToClient.writeInt(rand);
 			FileToClient.writeInt(rand);
 			tip = MsgFromClient.readInt();
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}

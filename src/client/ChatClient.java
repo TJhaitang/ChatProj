@@ -1,4 +1,4 @@
-package client;
+// package client;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,10 +23,9 @@ public class ChatClient
 	{
 		try
 		{
-			MsgSocket = new Socket("localhost", 12138);// 建立连接
-			FileSocket = new Socket("localhost", 12138);
-		}
-		catch (Exception e)
+			MsgSocket = new Socket("192.168.43.148", 12138);// 建立连接
+			FileSocket = new Socket("192.168.43.148", 12138);
+		} catch (Exception e)
 		{
 			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
 			System.exit(0);
@@ -143,8 +142,7 @@ class Login extends JFrame implements Flag
 					}
 				}
 
-			}
-			catch (IOException e)
+			} catch (IOException e)
 			{
 				e.printStackTrace();
 			}
@@ -154,8 +152,7 @@ class Login extends JFrame implements Flag
 
 	private void createNewUser(String name)
 	{
-		File user = new File(
-				System.getProperty("user.dir") + "/src/client/users/" + name);
+		File user = new File(System.getProperty("user.dir") + "/src/client/users/" + name);
 		if (user.mkdir())
 		{
 			try
@@ -165,8 +162,7 @@ class Login extends JFrame implements Flag
 				new File(user.getAbsolutePath() + "/groupList.txt").createNewFile();
 				new File(user.getAbsolutePath() + "/groupMsg").mkdir();
 				new File(user.getAbsolutePath() + "/friendMsg").mkdir();
-			}
-			catch (IOException e)
+			} catch (IOException e)
 			{
 				e.printStackTrace();
 			}
@@ -203,20 +199,19 @@ class Login extends JFrame implements Flag
 					return;
 				}
 				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-				    || passwordField.getPassword().length == 0)
+						|| passwordField.getPassword().length == 0)
 				{
 					return;
 				}
 				try
 				{
 					s.getMsgToServer().writeInt(1);
-				}
-				catch (IOException e1)
+				} catch (IOException e1)
 				{
 					e1.printStackTrace();
 				}
 				sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-				                                  String.valueOf(passwordField.getPassword()), 1);
+						String.valueOf(passwordField.getPassword()), 1);
 				new Thread(messenger).start();
 			}
 		});
@@ -231,20 +226,19 @@ class Login extends JFrame implements Flag
 					return;
 				}
 				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-				    || passwordField.getPassword().length == 0)
+						|| passwordField.getPassword().length == 0)
 				{
 					return;
 				}
 				try
 				{
 					s.getMsgToServer().writeInt(2);
-				}
-				catch (IOException e1)
+				} catch (IOException e1)
 				{
 					e1.printStackTrace();
 				}
 				sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-				                                  String.valueOf(passwordField.getPassword()), 2);
+						String.valueOf(passwordField.getPassword()), 2);
 				new Thread(messenger).start();
 			}
 		});
@@ -263,20 +257,19 @@ class Login extends JFrame implements Flag
 						return;
 					}
 					if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-					    || passwordField.getPassword().length == 0)
+							|| passwordField.getPassword().length == 0)
 					{
 						return;
 					}
 					try
 					{
 						s.getMsgToServer().writeInt(1);
-					}
-					catch (IOException e1)
+					} catch (IOException e1)
 					{
 						e1.printStackTrace();
 					}
 					sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-					                                  String.valueOf(passwordField.getPassword()), 1);
+							String.valueOf(passwordField.getPassword()), 1);
 					new Thread(messenger).start();
 				}
 			}
@@ -319,8 +312,8 @@ class ServerConnection
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
-	private final File parentFile = new File(System.getProperty("user.dir") + "/src/client/users");
-// 怎么获取当前代码文件的路径？,此路径指到当前代码所在文件夹
+	private final File parentFile = new File(System.getProperty("user.dir") + "/users");
+	// 怎么获取当前代码文件的路径？,此路径指到当前代码所在文件夹
 
 	ServerConnection()
 	{
@@ -337,8 +330,7 @@ class ServerConnection
 			MsgToServer = new DataOutputStream(MsgSocket.getOutputStream());
 			FileFromServer = new DataInputStream(FileSocket.getInputStream());
 			FileToServer = new DataOutputStream(FileSocket.getOutputStream());
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}
@@ -360,8 +352,7 @@ class ServerConnection
 				tip = Flag.FAIL;
 				MsgToServer.writeInt(Flag.FAIL);
 			}
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}

@@ -1,4 +1,4 @@
-package client;
+// package client;
 
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalIconFactory;
@@ -22,7 +22,7 @@ class ClientWindow extends JFrame implements Flag
 	{
 		this.sc = sc;
 		// 接受服务器消息
-
+		new Thread(new HandleASession(sc)).start();
 		// 创建选项卡
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
 		tabbedPane.setPreferredSize(new Dimension(300, 300));
@@ -30,10 +30,10 @@ class ClientWindow extends JFrame implements Flag
 		tabbedPane.setBackground(Color.white);
 		tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		// 创建整个好友列表
-//		createScrollPanel(tabbedPane, Flag.RECENTPANE);
+		// createScrollPanel(tabbedPane, Flag.RECENTPANE);
 		createScrollPanel(tabbedPane, Flag.FRIENDPANE);
 		createScrollPanel(tabbedPane, Flag.GROUPPANE);
-//		createScrollPanel(tabbedPane, Flag.PYQ);
+		// createScrollPanel(tabbedPane, Flag.PYQ);
 
 		tabbedPane.setEnabledAt(1, true);
 		tabbedPane.setSelectedIndex(0);
@@ -53,6 +53,7 @@ class ClientWindow extends JFrame implements Flag
 				tabbedPane.setCursor(Cursor.getDefaultCursor());
 			}
 		});
+
 		// 最后把选项卡放入frame
 		this.add(tabbedPane, BorderLayout.CENTER);
 		// new Thread(new C()).start();
@@ -66,22 +67,23 @@ class ClientWindow extends JFrame implements Flag
 	{
 		switch (id)
 		{
-			case FRIENDPANE -> {
-				createPane(tabbedPane, new MetalIconFactory.TreeControlIcon(true),
-				           "friendList.txt", "好友列表", "这里有你和所有好友聊天的信息");
-			}
-			case GROUPPANE -> {
-				createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(),
-				           "groupList.txt", "群组列表", "这里有你和所有好友聊天的信息");
-			}
-			case PYQ -> {
-				createPane(tabbedPane, new MetalIconFactory.FolderIcon16(),
-				           "friendList.txt", "朋友圈", "这里有你和所有群组的信息");
-			}
-			case RECENTPANE -> {
-				createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(),
-				           "", "最近消息", "这里有你和所有最近聊天的信息");
-			}
+		case FRIENDPANE ->
+		{
+			createPane(tabbedPane, new MetalIconFactory.TreeControlIcon(true), "friendList.txt", "好友列表",
+					"这里有你和所有好友聊天的信息");
+		}
+		case GROUPPANE ->
+		{
+			createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(), "groupList.txt", "群组列表", "这里有你和所有好友聊天的信息");
+		}
+		case PYQ ->
+		{
+			createPane(tabbedPane, new MetalIconFactory.FolderIcon16(), "friendList.txt", "朋友圈", "这里有你和所有群组的信息");
+		}
+		case RECENTPANE ->
+		{
+			createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(), "", "最近消息", "这里有你和所有最近聊天的信息");
+		}
 		}
 	}
 
@@ -92,8 +94,7 @@ class ClientWindow extends JFrame implements Flag
 		BufferedReader br;
 		try
 		{
-			br = new BufferedReader(
-					new FileReader(new File(sc.getParentFile(), "admin/" + list)));// 文件路径调用前面的，尽量不要重新写
+			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的，尽量不要重新写_改了个地方
 			String tmp;
 			while ((tmp = br.readLine()) != null)
 			{
@@ -101,8 +102,7 @@ class ClientWindow extends JFrame implements Flag
 				friendPane.add(panel);
 			}
 			br.close();
-		}
-		catch (IOException e)
+		} catch (IOException e)
 		{
 			e.printStackTrace();
 		}
@@ -184,49 +184,56 @@ class ClientWindow extends JFrame implements Flag
 					int sign = s.getMsgFromServer().readInt();
 					switch (sign)
 					{
-						case SENDFILE -> {
+					case SENDFILE ->
+					{
 
-//							message = s.getFileFromServer().readNBytes();
-						}
-						case SENDTEXT -> {
-							message = s.getMsgFromServer().readUTF();
-							String[] split = message.split("\\|");
-							// 若为已打开窗口则写入窗口中
-							if (friendWindows.containsKey(split[1]))
-							{
-								friendWindows.get(split[1]).AddMessage(message);
-							}
-							// 写入本地文件
-							File chatRecord =
-									new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
-							PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-							pw.println(message);
-							pw.close();
-							// 写入用户主窗口
-						}
-						// 收到请求加好友的信息
-						case ADDFRIEND -> {
-
-						}
-						// 收到同意加好友的信息
-						case ACCEPTFRIEND -> {
-
-						}
-						case CREATEGROUP -> {
-
-						}
-						case DELETEFRIEND -> {
-
-						}
-						case DELETEGROUP -> {
-
-						}
-						case QUITGROUP -> {
-
-						}
+						// message = s.getFileFromServer().readNBytes();
 					}
-				}
-				catch (IOException e)
+					case SENDTEXT -> // 先实现这部分功能尝试一下运行
+					{
+						message = s.getMsgFromServer().readUTF();
+						String[] split = message.split("\\|");
+						// 若为已打开窗口则写入窗口中
+						if (friendWindows.containsKey(split[1]))
+						{
+							friendWindows.get(split[1]).AddMessage(message);
+						}
+						// 写入本地文件
+						File chatRecord = new File(s.getParentFile(),
+								s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
+						PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+						pw.println(message);
+						pw.close();
+						// 写入用户主窗口
+					}
+					// 收到请求加好友的信息
+					case ADDFRIEND ->
+					{
+
+					}
+					// 收到同意加好友的信息
+					case ACCEPTFRIEND ->
+					{
+
+					}
+					case CREATEGROUP ->
+					{
+
+					}
+					case DELETEFRIEND ->
+					{
+
+					}
+					case DELETEGROUP ->
+					{
+
+					}
+					case QUITGROUP ->
+					{
+
+					}
+					}
+				} catch (IOException e)
 				{
 					e.printStackTrace();
 				}
