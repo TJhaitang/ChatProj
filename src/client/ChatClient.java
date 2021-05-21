@@ -133,7 +133,9 @@ class Login extends JFrame implements Flag
 					if (check == Flag.SUCCESS)
 					{
 						// 创建文件
+						createNewUser(username);
 						JOptionPane.showMessageDialog(lg, "注册成功");
+
 					} else if (check == Flag.FAIL)
 					{
 						JOptionPane.showMessageDialog(lg, "用户已存在");
@@ -146,6 +148,27 @@ class Login extends JFrame implements Flag
 				e.printStackTrace();
 			}
 			IsSending = 0;
+		}
+	}
+
+	private void createNewUser(String name)
+	{
+		File user = new File(
+				System.getProperty("user.dir") + "/src/client/users/" + name);
+		if (user.mkdir())
+		{
+			try
+			{
+				new File(user.getAbsolutePath() + "/config.txt").createNewFile();
+				new File(user.getAbsolutePath() + "/friendList.txt").createNewFile();
+				new File(user.getAbsolutePath() + "/groupList.txt").createNewFile();
+				new File(user.getAbsolutePath() + "/groupMsg").mkdir();
+				new File(user.getAbsolutePath() + "/friendMsg").mkdir();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 
