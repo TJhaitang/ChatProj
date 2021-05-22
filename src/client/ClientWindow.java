@@ -1,4 +1,4 @@
-// package client;
+package client;
 
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalIconFactory;
@@ -52,10 +52,10 @@ class ClientWindow extends JFrame implements Flag {
 		// 最后把选项卡放入frame
 		this.add(tabbedPane, BorderLayout.CENTER);
 		// new Thread(new C()).start();
-		this.setBounds(100, 100, 400, 800);
-		this.setVisible(true);
-		this.setLayout(null);
-		this.setResizable(true);
+		// this.setBounds(100, 100, 400, 800);
+		// this.setVisible(true);
+		// this.setLayout(null);
+		// this.setResizable(true);
 	}
 
 	private void createScrollPanel(JTabbedPane tabbedPane, int id) {

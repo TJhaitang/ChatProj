@@ -3,7 +3,9 @@ package server;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.security.*;
 
 public class ChatServer {
 	HashMap<String, TargetConnection> UserMap = new HashMap<>();
@@ -49,30 +51,31 @@ public class ChatServer {
 					sign = t.getMsgFromClient().readInt();// 接收登录or注册信号:登录1，注册2
 					username = t.getMsgFromClient().readUTF();
 					password = t.getMsgFromClient().readUTF();
+					byte[] pswdCode = TransPswd(password);
 					// 为了我们的文件目录统一，使用getProperty得到项目目录——这里用相对目录就可以了
 					File user = new File(
-							System.getProperty("user.dir") + "/src/server/users/" + username + "/userinfo.txt");
+							System.getProperty("user.dir") + "/src/server/users/" + username + "/userinfo.key");
 					if (sign == Flag.LOGIN) {// 登录
 						if (!user.exists()) {// 如果没有此账号
 							t.getMsgToClient().writeInt(Flag.FAIL);
 							continue;
 						}
 						// 对照密码
-						BufferedReader br = new BufferedReader(new FileReader(user));
-						String pswd = br.readLine();
-						if (pswd.equals(password)) {// 登录成功
+						FileInputStream fis = new FileInputStream(user);
+						byte[] pswd = fis.readAllBytes();
+						if (Arrays.equals(pswd, pswdCode)) {// 登录成功
 							t.getMsgToClient().writeInt(Flag.SUCCESS);// 向用户发送成功信号
 							t.setUsername(username);
 							UserMap.put(username, t);// 将用户放入hashmap__还需要拿出来
 							System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":登录为 " + username);
 							HandleASession hand = new HandleASession(t);//
 							new Thread(hand).start();
-							br.close();
+							fis.close();
 							break;
 						} else {
 							t.getMsgToClient().writeInt(Flag.FAIL);
 						}
-						br.close();
+						fis.close();
 					}
 					if (sign == Flag.SIGNUP) {// 注册
 						if (user.exists()) {// 如果已经有此账号
@@ -83,9 +86,10 @@ public class ChatServer {
 						parent.mkdirs();
 						user.createNewFile();
 						// 保存密码
-						BufferedWriter bw = new BufferedWriter(new FileWriter(user));
-						bw.write(password);
-						bw.close();
+						FileOutputStream fos = new FileOutputStream(user);
+						fos.write(pswdCode, 0, pswdCode.length);
+						fos.flush();
+						fos.close();
 						CreateNewUser(parent);// 创建用户文件夹
 						t.getMsgToClient().writeInt(Flag.SUCCESS);
 					}
@@ -95,6 +99,19 @@ public class ChatServer {
 					return;
 				}
 			}
+		}
+
+		private byte[] TransPswd(String password) {
+			MessageDigest md5 = null;
+			try {
+				md5 = MessageDigest.getInstance("MD5");
+				byte[] srcBytes = password.getBytes();
+				md5.update(srcBytes);
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
+			byte[] resultBytes = md5.digest();
+			return resultBytes;
 		}
 
 		private void CreateNewUser(File f) {// 新建用户的文件格式在这里声明，目前已有userinfo
@@ -124,9 +141,9 @@ public class ChatServer {
 				e.printStackTrace();
 			}
 			// String[] split = Msg.split("\\|");
-			if (isFriend(TargetName)) {
+			if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友
 				if (UserMap.containsKey(TargetName)) {
-					System.out.println("测试！");
+					System.out.println("向" + TargetName + "发送信息");
 					TargetConnection t2 = UserMap.get(TargetName);
 					try {
 						t2.getMsgToClient().writeInt(Flag.SENDTEXT);
@@ -135,14 +152,14 @@ public class ChatServer {
 					{
 						e.printStackTrace();
 						try {
-							t.getMsgToClient().writeInt(Flag.FAIL);
+							t.getMsgToClient().writeInt(Flag.FAIL);// 目前用户端收不到这个消息
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
 						return;
 					}
 					try {
-						t.getMsgToClient().writeInt(Flag.SUCCESS);
+						t.getMsgToClient().writeInt(Flag.SUCCESS);// 目前用户端收不到这个消息
 					} catch (IOException e) {
 						e.printStackTrace();
 					} // 再写一下fail的

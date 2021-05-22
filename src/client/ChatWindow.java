@@ -1,4 +1,4 @@
-// package client;
+package client;
 
 // import server.Flag;
 
@@ -162,9 +162,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 		@Override
 		public void run() {
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
-			// str = "123\n13200";
 			str = str.replaceAll("\n", "<br>");
-			System.out.println(str);
 			str = df.format(new Date()) + "|" + s.getSelfName() + "|" + "0" + "|" + str + "|TEXT";// 0为未读
 			AddMessage(str);
 			sendMsg(str);
@@ -230,9 +228,9 @@ class FriendWindow extends ChatWindow {
 	@Override
 	void sendMsg(String str) {
 		try {
-			// s.getMsgToServer().writeInt(Flag.SENDTEXT);
-			// s.getMsgToServer().writeUTF(Target);
-			// s.getMsgToServer().writeUTF(str);
+			s.getMsgToServer().writeInt(Flag.SENDTEXT);
+			s.getMsgToServer().writeUTF(Target);
+			s.getMsgToServer().writeUTF(str);
 			int a = Flag.SUCCESS;
 			// int a = s.getMsgFromServer().readInt();
 			if (a != Flag.SUCCESS) {

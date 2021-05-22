@@ -1,4 +1,4 @@
-// package client;
+package client;
 
 import javax.swing.*;
 import java.awt.*;
@@ -207,7 +207,6 @@ class Login extends JFrame implements Flag {
 		passwordField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				// System.out.println("??????????");
 				super.keyPressed(e);
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					if (IsSending == 1) {
@@ -263,8 +262,8 @@ class ServerConnection {
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
-	private final File parentFile = new File(System.getProperty("user.dir") + "/users");
-	// 怎么获取当前代码文件的路径？,此路径指到当前代码所在文件夹
+	private final File parentFile = new File(System.getProperty("user.dir") + "/src/client/users");
+	// 怎么获取当前代码文件的路径？
 
 	ServerConnection() {
 	}
