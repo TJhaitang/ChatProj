@@ -11,15 +11,13 @@ import java.util.HashMap;
 
 // 传进用户ID，用s连接到服务器,创建界面（做按钮、界面列表、个人信息、朋友圈入口）
 // 按钮连接到聊天框、朋友圈界面
-class ClientWindow extends JFrame implements Flag
-{
+class ClientWindow extends JFrame implements Flag {
 
 	HashMap<String, FriendWindow> friendWindows = new HashMap<>();
 	private final ServerConnection sc;
 	ClientWindow cw = this;
 
-	ClientWindow(ServerConnection sc)
-	{
+	ClientWindow(ServerConnection sc) {
 		this.sc = sc;
 		// 接受服务器消息
 		new Thread(new HandleASession(sc)).start();
@@ -37,18 +35,15 @@ class ClientWindow extends JFrame implements Flag
 
 		tabbedPane.setEnabledAt(1, true);
 		tabbedPane.setSelectedIndex(0);
-		tabbedPane.addMouseListener(new MouseAdapter()
-		{
+		tabbedPane.addMouseListener(new MouseAdapter() {
 			@Override
-			public void mouseEntered(MouseEvent e)
-			{
+			public void mouseEntered(MouseEvent e) {
 				super.mouseEntered(e);
 				tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 			}
 
 			@Override
-			public void mouseExited(MouseEvent e)
-			{
+			public void mouseExited(MouseEvent e) {
 				super.mouseExited(e);
 				tabbedPane.setCursor(Cursor.getDefaultCursor());
 			}
@@ -63,129 +58,102 @@ class ClientWindow extends JFrame implements Flag
 		this.setResizable(true);
 	}
 
-	private void createScrollPanel(JTabbedPane tabbedPane, int id)
-	{
-		switch (id)
-		{
-		case FRIENDPANE ->
-		{
+	private void createScrollPanel(JTabbedPane tabbedPane, int id) {
+		switch (id) {
+		case FRIENDPANE -> {
 			createPane(tabbedPane, new MetalIconFactory.TreeControlIcon(true), "friendList.txt", "好友列表",
 					"这里有你和所有好友聊天的信息");
 		}
-		case GROUPPANE ->
-		{
+		case GROUPPANE -> {
 			createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(), "groupList.txt", "群组列表", "这里有你和所有好友聊天的信息");
 		}
-		case PYQ ->
-		{
+		case PYQ -> {
 			createPane(tabbedPane, new MetalIconFactory.FolderIcon16(), "friendList.txt", "朋友圈", "这里有你和所有群组的信息");
 		}
-		case RECENTPANE ->
-		{
+		case RECENTPANE -> {
 			createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(), "", "最近消息", "这里有你和所有最近聊天的信息");
 		}
 		}
 	}
 
-	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip)
-	{
+	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip) {
 		JPanel friendPane = new JPanel();
 		friendPane.setLayout(new GridLayout(20, 1));
 		BufferedReader br;
-		try
-		{
+		try {
 			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的，尽量不要重新写_改了个地方
 			String tmp;
-			while ((tmp = br.readLine()) != null)
-			{
+			while ((tmp = br.readLine()) != null) {
 				JComponent panel = createFriendPanel(tmp);
 				friendPane.add(panel);
 			}
 			br.close();
-		} catch (IOException e)
-		{
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		JScrollPane scrollPane = new JScrollPane(friendPane);
 		tabbedPane.addTab(title, paneIcon, scrollPane, tip);
 	}
 
-	public void deleteWindow(String ID)
-	{
+	public void deleteWindow(String ID) {
 		friendWindows.remove(ID);
 		System.out.println(friendWindows.size());
 	}
 
-	protected JComponent createFriendPanel(String text)
-	{
+	protected JComponent createFriendPanel(String text) {
 		JPanel panel = new JPanel(false);
 		JLabel filler = new JLabel(text);
 		filler.setHorizontalAlignment(JLabel.CENTER);
 		panel.setLayout(new GridLayout(1, 1));
 		panel.add(filler);
-		panel.addMouseListener(new MouseListener()
-		{
+		panel.addMouseListener(new MouseListener() {
 			@Override
-			public void mouseClicked(MouseEvent e)
-			{
-				if (friendWindows.containsKey(text))
-				{
+			public void mouseClicked(MouseEvent e) {
+				if (friendWindows.containsKey(text)) {
 					friendWindows.get(text).setVisible(true);
-				} else
-				{
+				} else {
 					friendWindows.put(text, new FriendWindow(sc, text, cw));
 				}
 			}
 
 			@Override
-			public void mousePressed(MouseEvent e)
-			{
+			public void mousePressed(MouseEvent e) {
 				panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 			}
 
 			@Override
-			public void mouseReleased(MouseEvent e)
-			{
+			public void mouseReleased(MouseEvent e) {
 				panel.setCursor(Cursor.getDefaultCursor());
 			}
 
 			@Override
-			public void mouseEntered(MouseEvent e)
-			{
+			public void mouseEntered(MouseEvent e) {
 				panel.setBackground(Color.lightGray);
 			}
 
 			@Override
-			public void mouseExited(MouseEvent e)
-			{
+			public void mouseExited(MouseEvent e) {
 				panel.setBackground(Color.white);
 			}
 		});
 		return panel;
 	}
 
-	class HandleASession implements Runnable
-	{// 在这里实现信息交互
+	class HandleASession implements Runnable {// 在这里实现信息交互
 		ServerConnection s;
 
-		HandleASession(ServerConnection s)
-		{
+		HandleASession(ServerConnection s) {
 			this.s = s;
 		}
 
 		@Override
-		public void run()
-		{
+		public void run() {
 			String message;
-			while (true)
-			{
-				try
-				{
+			while (true) {
+				try {
 					int sign = s.getMsgFromServer().readInt();
-					switch (sign)
-					{
-					case SENDFILE ->
-					{
+					switch (sign) {
+					case SENDFILE -> {
 
 						// message = s.getFileFromServer().readNBytes();
 					}
@@ -194,8 +162,7 @@ class ClientWindow extends JFrame implements Flag
 						message = s.getMsgFromServer().readUTF();
 						String[] split = message.split("\\|");
 						// 若为已打开窗口则写入窗口中
-						if (friendWindows.containsKey(split[1]))
-						{
+						if (friendWindows.containsKey(split[1])) {
 							friendWindows.get(split[1]).AddMessage(message);
 						}
 						// 写入本地文件
@@ -207,34 +174,27 @@ class ClientWindow extends JFrame implements Flag
 						// 写入用户主窗口
 					}
 					// 收到请求加好友的信息
-					case ADDFRIEND ->
-					{
+					case ADDFRIEND -> {
 
 					}
 					// 收到同意加好友的信息
-					case ACCEPTFRIEND ->
-					{
+					case ACCEPTFRIEND -> {
 
 					}
-					case CREATEGROUP ->
-					{
+					case CREATEGROUP -> {
 
 					}
-					case DELETEFRIEND ->
-					{
+					case DELETEFRIEND -> {
 
 					}
-					case DELETEGROUP ->
-					{
+					case DELETEGROUP -> {
 
 					}
-					case QUITGROUP ->
-					{
+					case QUITGROUP -> {
 
 					}
 					}
-				} catch (IOException e)
-				{
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}

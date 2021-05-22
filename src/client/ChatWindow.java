@@ -4,6 +4,8 @@
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -13,10 +15,15 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
+
 // 私聊 创建好友聊天界面，将本地聊天数据读取到这里，按照时间顺序制作窗口
-abstract class ChatWindow extends JFrame implements Flag
-{
+abstract class ChatWindow extends JFrame implements Flag {
 	protected JTextPane MsgLabel = new JTextPane();
+	protected HTMLDocument text_html;
+	protected HTMLEditorKit htmledit = new HTMLEditorKit();
 	protected JScrollPane MsgList;
 
 	protected JScrollPane TextBox;
@@ -34,8 +41,9 @@ abstract class ChatWindow extends JFrame implements Flag
 
 	protected ClientWindow cw;
 
-	ChatWindow()
-	{
+	protected SimpleAttributeSet attr = new SimpleAttributeSet();
+
+	ChatWindow() {
 		this.setLayout(null);
 		this.setSize(700, 500);
 		this.setResizable(false);// 懒得解决问题，就解决问题的起因
@@ -51,8 +59,11 @@ abstract class ChatWindow extends JFrame implements Flag
 
 		this.add(buttonPanel_side);
 		// 聊天信息展示部分
+		text_html = (HTMLDocument) htmledit.createDefaultDocument();
+		MsgLabel.setEditorKit(htmledit);
+		MsgLabel.setContentType("text/html");
+		MsgLabel.setDocument(text_html);
 		MsgLabel.setSize(650, 300);
-
 		MsgLabel.setEditable(false);
 		MsgList = new JScrollPane(MsgLabel);
 		MsgList.setBounds(30, 0, 655, 355);
@@ -63,14 +74,11 @@ abstract class ChatWindow extends JFrame implements Flag
 		TextBox.setBounds(30, 355, 620, 100);
 		this.add(TextBox);
 
-		sendButton.addActionListener(new ActionListener()
-		{
+		sendButton.addActionListener(new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent e)
-			{
+			public void actionPerformed(ActionEvent e) {
 				String text = Text.getText();
-				if (text == null || text.equals(""))
-				{
+				if (text == null || text.equals("")) {
 					return;
 				}
 				Sender sender = new Sender(Text.getText());
@@ -78,11 +86,9 @@ abstract class ChatWindow extends JFrame implements Flag
 				new Thread(sender).start();
 			}
 		});
-		voiceButton.addActionListener(new ActionListener()
-		{
+		voiceButton.addActionListener(new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent e)
-			{
+			public void actionPerformed(ActionEvent e) {
 				// -//发消息
 			}
 		});
@@ -100,8 +106,7 @@ abstract class ChatWindow extends JFrame implements Flag
 		// });
 	}
 
-	ChatWindow(ServerConnection s, String tar, ClientWindow cw)
-	{
+	ChatWindow(ServerConnection s, String tar, ClientWindow cw) {
 		this();
 		this.s = s;
 		this.Target = tar;
@@ -111,27 +116,32 @@ abstract class ChatWindow extends JFrame implements Flag
 	public void AddMessage(String msg)// msg为与服务器交互的标准模式，该函数将此信息打印到屏幕上
 	{// 在这里实现信息的展示,0为在最上方插入，1为在最下方
 		String[] ss = msg.split("\\|");
-		String name = ss[1];// 记得改
-		if (name.equals(s.getSelfName()))
-		{// 自己发的消息
+		String name = ss[1];// 记得改--？？改啥啊woc我完全不记得当时啥意思了能不能好好写注释
+		if (name.equals(s.getSelfName())) {// 自己发的消息
+			StyleConstants.setAlignment(attr, StyleConstants.ALIGN_RIGHT);
+		} else {// 别人发的
+			StyleConstants.setAlignment(attr, StyleConstants.ALIGN_LEFT);
+		}
+		if (ss[4].equals("TEXT")) {
 			StyledDocument document = (StyledDocument) MsgLabel.getDocument();
-			try
-			{
-				document.insertString(document.getLength(), name + "  " + ss[0] + "\n" + ss[3] + "\n", null);
+			try {
+				StyleConstants.setForeground(attr, Color.black);
+				MsgLabel.setParagraphAttributes(attr, false);
+				document.insertString(document.getLength(), name + " " + ss[0] + "\n", null);
+				StyleConstants.setForeground(attr, Color.gray);
+				MsgLabel.setParagraphAttributes(attr, false);
+				String msgStr = ss[3].replaceAll("<br>", "\n");
+				document.insertString(document.getLength(), msgStr + "\n", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-			} catch (BadLocationException e)
-			{
+			} catch (BadLocationException e) {
 				e.printStackTrace();
 			}
-		} else
-		{// 别人发的
-			StyledDocument document = (StyledDocument) MsgLabel.getDocument();
-			try
-			{
-				document.insertString(document.getLength(), name + "  " + ss[0] + "\n" + ss[3] + "\n", null);
-				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-			} catch (BadLocationException e)
-			{
+		} else if (ss[4].equals("IMG")) {
+			try {
+				htmledit.insertHTML(text_html, MsgLabel.getCaretPosition(), "<img src='file:///"
+						+ s.getParentFile().getParent() + "/image/" + ss[3] + "' width=10px height=10px>", 0, 0,
+						HTML.Tag.IMG);
+			} catch (BadLocationException | IOException e) {
 				e.printStackTrace();
 			}
 		}
@@ -142,39 +152,37 @@ abstract class ChatWindow extends JFrame implements Flag
 	abstract void sendMsg(String s);// 发信，与服务器做交互
 
 	// 发信工具类，收信类放到用户界面内
-	private class Sender implements Runnable
-	{
+	private class Sender implements Runnable {
 		String str;
 
-		Sender(String str)
-		{
+		Sender(String str) {
 			this.str = str;
 		}
 
 		@Override
-		public void run()
-		{
+		public void run() {
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
-			str = df.format(new Date()) + "|" + s.getSelfName() + "|" + "0" + "|" + str;// 0为未读
+			// str = "123\n13200";
+			str = str.replaceAll("\n", "<br>");
+			System.out.println(str);
+			str = df.format(new Date()) + "|" + s.getSelfName() + "|" + "0" + "|" + str + "|TEXT";// 0为未读
 			AddMessage(str);
 			sendMsg(str);
 		}
 	}
 }
 
-class FriendWindow extends ChatWindow
-{
+class FriendWindow extends ChatWindow {
 	// String friendName;// 换一下，换到父类里面去
 
-	// public static void main(String[] args) {
-	// ServerConnection s = new ServerConnection();
-	// s.setSelfName("admin");
-	// new FriendWindow(s, "secondPerson");
+	public static void main(String[] args) {
+		ServerConnection s = new ServerConnection();
+		s.setSelfName("admin");
+		new FriendWindow(s, "thirdPerson", null);
 
-	// }
+	}
 
-	FriendWindow(ServerConnection s, String friendName, ClientWindow cw)
-	{// 构造函数，完成消息的展示即可，同步在上线时与用户界面完成
+	FriendWindow(ServerConnection s, String friendName, ClientWindow cw) {// 构造函数，完成消息的展示即可，同步在上线时与用户界面完成
 		super(s, friendName, cw);
 		// this.friendName = friendName;
 		this.setTitle(friendName);
@@ -183,76 +191,59 @@ class FriendWindow extends ChatWindow
 	}
 
 	// 不能删，不然就关闭全部窗口了
-	protected void processWindowEvent(WindowEvent e)
-	{
-		if (e.getID() == WindowEvent.WINDOW_CLOSING)
-		{
+	protected void processWindowEvent(WindowEvent e) {
+		if (e.getID() == WindowEvent.WINDOW_CLOSING) {
 
 			this.dispose();
 			cw.deleteWindow(Target);// 对于好友来说，T为好友名；对于群组，T为群组ID
-		} else
-		{
+		} else {
 			super.processWindowEvent(e);
 		}
 	}
 
 	@Override
-	void display()
-	{// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
+	void display() {// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
 		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + Target + ".txt");// 此文件在加好友时创建,文件路径记得改
 		BufferedReader br = null;
-		try
-		{
+		try {
 			br = new BufferedReader(new FileReader(chatRecord));
-		} catch (FileNotFoundException e)
-		{
+		} catch (FileNotFoundException e) {
 			JOptionPane.showMessageDialog(this, "消息记录不存在！");
-			try
-			{
+			try {
 				chatRecord.createNewFile();
-			} catch (IOException ioException)
-			{
+			} catch (IOException ioException) {
 				ioException.printStackTrace();
 			}
 			e.printStackTrace();
 		}
 		String str;
-		try
-		{
-			while ((str = br.readLine()) != null)
-			{
+		try {
+			while ((str = br.readLine()) != null) {
 				AddMessage(str);
 			}
 			br.close();
-		} catch (IOException e)
-		{
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	@Override
-	void sendMsg(String str)
-	{
-		try
-		{
-			s.getMsgToServer().writeInt(Flag.SENDTEXT);
-			s.getMsgToServer().writeUTF(Target);
-			s.getMsgToServer().writeUTF(str);
+	void sendMsg(String str) {
+		try {
+			// s.getMsgToServer().writeInt(Flag.SENDTEXT);
+			// s.getMsgToServer().writeUTF(Target);
+			// s.getMsgToServer().writeUTF(str);
 			int a = Flag.SUCCESS;
 			// int a = s.getMsgFromServer().readInt();
-			if (a != Flag.SUCCESS)
-			{
+			if (a != Flag.SUCCESS) {
 				JOptionPane.showMessageDialog(MsgList, "发送失败");
-			} else
-			{
+			} else {
 				File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + Target + ".txt");
 				PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
 				pw.println(str);
 				pw.close();
 			}
-		} catch (IOException e)
-		{
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}

@@ -19,8 +19,8 @@ public class ChatClient {
 
 	ChatClient() {
 		try {
-			MsgSocket = new Socket("192.168.43.148", 12138);// 建立连接
-			FileSocket = new Socket("192.168.43.148", 12138);
+			MsgSocket = new Socket("localhost", 12138);// 建立连接
+			FileSocket = new Socket("localhost", 12138);
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
 			System.exit(0);
@@ -134,7 +134,10 @@ class Login extends JFrame implements Flag {
 				new File(user.getAbsolutePath() + "/groupList.txt").createNewFile();
 				new File(user.getAbsolutePath() + "/groupMsg").mkdir();
 				new File(user.getAbsolutePath() + "/friendMsg").mkdir();
+				new File(user.getAbsolutePath() + "/file").mkdir();
+				new File(user.getAbsolutePath() + "/image").mkdir();
 			} catch (IOException e) {
+				JOptionPane.showMessageDialog(this, "创建失败！");
 				e.printStackTrace();
 			}
 		}
@@ -260,7 +263,7 @@ class ServerConnection {
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
-	private final File parentFile = new File(System.getProperty("user.dir") + "/src/client/users");
+	private final File parentFile = new File(System.getProperty("user.dir") + "/users");
 	// 怎么获取当前代码文件的路径？,此路径指到当前代码所在文件夹
 
 	ServerConnection() {
