@@ -50,6 +50,8 @@ class ClientWindow extends JFrame implements Flag {
 		});
 
 		// 最后把选项卡放入frame
+		setIconImage(
+				Toolkit.getDefaultToolkit().getImage(System.getProperty("user.dir") + "/src/client/system/icon.png"));
 		this.add(tabbedPane, BorderLayout.CENTER);
 		// new Thread(new C()).start();
 		// this.setBounds(100, 100, 400, 800);
@@ -97,7 +99,7 @@ class ClientWindow extends JFrame implements Flag {
 
 	public void deleteWindow(String ID) {
 		friendWindows.remove(ID);
-		System.out.println(friendWindows.size());
+		// System.out.println(friendWindows.size());
 	}
 
 	protected JComponent createFriendPanel(String text) {
@@ -152,6 +154,7 @@ class ClientWindow extends JFrame implements Flag {
 			while (true) {
 				try {
 					int sign = s.getMsgFromServer().readInt();
+					System.out.println("helloworld");
 					switch (sign) {
 					case SENDFILE -> {
 

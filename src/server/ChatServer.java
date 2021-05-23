@@ -1,14 +1,20 @@
-package server;
+// package server;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
+
+import javax.sound.midi.ShortMessage;
+
 import java.security.*;
+import java.sql.Struct;
 
 public class ChatServer {
-	HashMap<String, TargetConnection> UserMap = new HashMap<>();
+	HashMap<String, HandleASession> UserMap = new HashMap<>();
 
 	public static void main(String[] args) {
 		ChatServer cs = new ChatServer();
@@ -52,9 +58,8 @@ public class ChatServer {
 					username = t.getMsgFromClient().readUTF();
 					password = t.getMsgFromClient().readUTF();
 					byte[] pswdCode = TransPswd(password);
-					// 为了我们的文件目录统一，使用getProperty得到项目目录——这里用相对目录就可以了
-					File user = new File(
-							System.getProperty("user.dir") + "/src/server/users/" + username + "/userinfo.key");
+					// 为了我们的文件目录统一，使用getProperty得到项目目录
+					File user = new File(System.getProperty("user.dir") + "/users/" + username + "/userinfo.key");
 					if (sign == Flag.LOGIN) {// 登录
 						if (!user.exists()) {// 如果没有此账号
 							t.getMsgToClient().writeInt(Flag.FAIL);
@@ -66,10 +71,9 @@ public class ChatServer {
 						if (Arrays.equals(pswd, pswdCode)) {// 登录成功
 							t.getMsgToClient().writeInt(Flag.SUCCESS);// 向用户发送成功信号
 							t.setUsername(username);
-							UserMap.put(username, t);// 将用户放入hashmap__还需要拿出来
 							System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":登录为 " + username);
 							HandleASession hand = new HandleASession(t);//
-							new Thread(hand).start();
+							UserMap.put(username, hand);// 将用户放入hashmap__还需要拿出来
 							fis.close();
 							break;
 						} else {
@@ -124,89 +128,138 @@ public class ChatServer {
 		}
 	}
 
-	class HandleASession implements Runnable {// 在这里实现信息交互
+	class HandleASession {// 在这里实现信息交互
 		TargetConnection t;
+		Reciever reciever = new Reciever();
+		Sender sender = new Sender();
 
 		HandleASession(TargetConnection t) {
 			this.t = t;
+			new Thread(reciever).start();
+			new Thread(sender).start();
 		}
 
-		private void SendMsg()// 发消息用不同函数实现可以么？是不是有点不优雅
-		{// 先直接发，后面写存文件待发送
-			String TargetName = null, Msg = null;
-			try {
-				TargetName = t.getMsgFromClient().readUTF();
-				Msg = t.getMsgFromClient().readUTF();
-			} catch (IOException e) {
-				e.printStackTrace();
+		private class MsgPair {
+			int flag;
+			String MsgString;
+
+			MsgPair(int flag, String Msg) {
+				this.flag = flag;
+				this.MsgString = Msg;
 			}
-			// String[] split = Msg.split("\\|");
-			if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友
-				if (UserMap.containsKey(TargetName)) {
-					System.out.println("向" + TargetName + "发送信息");
-					TargetConnection t2 = UserMap.get(TargetName);
+		}
+
+		private class Reciever implements Runnable {
+
+			@Override
+			public void run() {
+				while (true) {
+					int sign;
 					try {
-						t2.getMsgToClient().writeInt(Flag.SENDTEXT);
-						t2.getMsgToClient().writeUTF(Msg);
-					} catch (IOException e)// 这里执行一下删map和存文件——按理说不应该不存在
-					{
-						e.printStackTrace();
-						try {
-							t.getMsgToClient().writeInt(Flag.FAIL);// 目前用户端收不到这个消息
-						} catch (IOException e1) {
-							e1.printStackTrace();
+						sign = t.getMsgFromClient().readInt();
+						switch (sign) {
+						case Flag.SENDTEXT: {
+							SendMsg();
+							break;
 						}
+						case Flag.SENDFILE:/* 往下先等等 */
+						{
+							break;
+						}
+						default:
+							break;
+						}
+					} catch (IOException e)// 如果是收信者下线该怎么办？_写函数，别在这里实现逻辑
+					{
+						System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":退出");
+						// 从map中删掉
+						sender.stop();
+						UserMap.remove(t.getUsername());
 						return;
 					}
-					try {
-						t.getMsgToClient().writeInt(Flag.SUCCESS);// 目前用户端收不到这个消息
-					} catch (IOException e) {
-						e.printStackTrace();
-					} // 再写一下fail的
-				} else {
-					try {
-						t.getMsgToClient().writeInt(Flag.FAIL);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
 				}
-			} else {
-
 			}
-		}
 
-		private boolean isFriend(String tar)// 判断这个目标是好友or群组
-		{
-			return true;
-		}
-
-		@Override
-		public void run() {
-			while (true) {
-				int sign;
+			private void SendMsg()// 发消息用不同函数实现可以么？是不是有点不优雅
+			{// 先直接发，后面写存文件待发送
+				String TargetName = null, Msg = null;
 				try {
-					sign = t.getMsgFromClient().readInt();
-					switch (sign) {
-					case Flag.SENDTEXT: {
-						SendMsg();
-						break;
+					TargetName = t.getMsgFromClient().readUTF();
+					Msg = t.getMsgFromClient().readUTF();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				// String[] split = Msg.split("\\|");
+				if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友
+					if (UserMap.containsKey(TargetName)) {
+						System.out.println("向" + TargetName + "发送信息");
+						HandleASession h2 = UserMap.get(TargetName);
+						h2.sender.PutMsg(new MsgPair(Flag.SENDTEXT, Msg));// str格式再想一下
+					} else {
+						AddMsgToFile(TargetName, new MsgPair(Flag.SENDTEXT, Msg));
 					}
-					case Flag.SENDFILE:/* 往下先等等 */
-					{
-						break;
-					}
-					default:
-						break;
-					}
-				} catch (IOException e)// 如果是收信者下线该怎么办？_写函数，别在这里实现逻辑
-				{
-					System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":退出");
-					// 从map中删掉
-					UserMap.remove(t.getUsername());
-					return;
+				} else {// 这里实现发群的逻辑
+
 				}
 			}
+
+			private boolean isFriend(String tar)// 判断这个目标是好友or群组
+			{
+				return true;
+			}
+
+			private void AddMsgToFile(String username, MsgPair mp) {// 图片怎么办？，但应该差别不大
+
+			}
 		}
+
+		private class Sender implements Runnable {
+			Queue<MsgPair> MsgQueue = new LinkedList<MsgPair>();
+			int go = 1;
+
+			public void PutMsg(MsgPair ss) {
+				for (int i = 1; i < 10; i++) {
+					System.out.println("fff");
+				}
+				MsgQueue.add(ss);
+				if (!MsgQueue.isEmpty()) {// 这个改成锁
+					System.out.println("排好队！");
+					MsgPair mp = MsgQueue.poll();
+					try {
+						t.getMsgToClient().writeInt(mp.flag);
+						t.getMsgToClient().writeUTF(mp.MsgString);// 失败后写文件(吗？)
+					} catch (IOException e) {// 写文件
+						e.printStackTrace();
+					}
+				}
+			}
+
+			public void stop() {
+				go = 0;
+			}
+
+			@Override
+			public void run() {
+				while (go == 1) {
+					if (!MsgQueue.isEmpty()) {// 这个改成锁
+						System.out.println("排好队！");
+						MsgPair mp = MsgQueue.poll();
+						try {
+							t.getMsgToClient().writeInt(mp.flag);
+							t.getMsgToClient().writeUTF(mp.MsgString);// 失败后写文件(吗？)
+						} catch (IOException e) {// 写文件
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+
+			Sender() {// 把文件中的指令扔进队列里
+
+			}
+
+		}
+
 	}
 }
 

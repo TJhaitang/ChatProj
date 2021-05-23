@@ -250,6 +250,8 @@ class Login extends JFrame implements Flag {
 			}
 		});
 
+		setIconImage(
+				Toolkit.getDefaultToolkit().getImage(System.getProperty("user.dir") + "/src/client/system/icon.png"));
 		this.setVisible(true);
 	}
 }

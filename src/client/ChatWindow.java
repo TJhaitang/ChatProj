@@ -97,6 +97,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 		buttonPanel_text.add(voiceButton);
 		buttonPanel_text.add(sendButton);
 		buttonPanel_text.setBounds(650, 355, 35, 98);
+		setIconImage(
+				Toolkit.getDefaultToolkit().getImage(System.getProperty("user.dir") + "/src/client/system/icon.png"));
 		this.add(buttonPanel_text);
 
 		// this.addWindowListener(new WindowAdapter() {
@@ -138,9 +140,10 @@ abstract class ChatWindow extends JFrame implements Flag {
 			}
 		} else if (ss[4].equals("IMG")) {
 			try {
-				htmledit.insertHTML(text_html, MsgLabel.getCaretPosition(), "<img src='file:///"
-						+ s.getParentFile().getParent() + "/image/" + ss[3] + "' width=10px height=10px>", 0, 0,
-						HTML.Tag.IMG);
+				MsgLabel.setParagraphAttributes(attr, false);
+				htmledit.insertHTML(text_html, MsgLabel.getCaretPosition(),
+						"<br><img src='file:///" + s.getParentFile().getParent() + "/image/" + ss[3] + "' >", 0, 0,
+						HTML.Tag.HTML);
 			} catch (BadLocationException | IOException e) {
 				e.printStackTrace();
 			}
