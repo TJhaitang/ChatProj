@@ -7,11 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
-
-import javax.sound.midi.ShortMessage;
-
 import java.security.*;
-import java.sql.Struct;
 
 public class ChatServer {
 	HashMap<String, HandleASession> UserMap = new HashMap<>();
@@ -59,7 +55,8 @@ public class ChatServer {
 					password = t.getMsgFromClient().readUTF();
 					byte[] pswdCode = TransPswd(password);
 					// 为了我们的文件目录统一，使用getProperty得到项目目录
-					File user = new File(System.getProperty("user.dir") + "/users/" + username + "/userinfo.key");
+					File user = new File(
+							System.getProperty("user.dir") + "src/server/users/" + username + "/userinfo.key");
 					if (sign == Flag.LOGIN) {// 登录
 						if (!user.exists()) {// 如果没有此账号
 							t.getMsgToClient().writeInt(Flag.FAIL);
@@ -132,6 +129,8 @@ public class ChatServer {
 		TargetConnection t;
 		Reciever reciever = new Reciever();
 		Sender sender = new Sender();
+		Queue<MsgPair> MsgQueue = new LinkedList<MsgPair>();
+		int go = 1;
 
 		HandleASession(TargetConnection t) {
 			this.t = t;
@@ -214,33 +213,24 @@ public class ChatServer {
 		}
 
 		private class Sender implements Runnable {
-			Queue<MsgPair> MsgQueue = new LinkedList<MsgPair>();
-			int go = 1;
-
-			public void PutMsg(MsgPair ss) {
-				for (int i = 1; i < 10; i++) {
-					System.out.println("fff");
-				}
-				MsgQueue.add(ss);
-				if (!MsgQueue.isEmpty()) {// 这个改成锁
-					System.out.println("排好队！");
-					MsgPair mp = MsgQueue.poll();
-					try {
-						t.getMsgToClient().writeInt(mp.flag);
-						t.getMsgToClient().writeUTF(mp.MsgString);// 失败后写文件(吗？)
-					} catch (IOException e) {// 写文件
-						e.printStackTrace();
-					}
-				}
-			}
 
 			public void stop() {
 				go = 0;
 			}
 
+			public void PutMsg(MsgPair ss) {
+				MsgQueue.add(ss);
+				// System.out.println("测试一下");
+			}
+
 			@Override
 			public void run() {
 				while (go == 1) {
+					try {
+						Thread.sleep(5);// 为啥能用了？
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
 					if (!MsgQueue.isEmpty()) {// 这个改成锁
 						System.out.println("排好队！");
 						MsgPair mp = MsgQueue.poll();
