@@ -1,4 +1,4 @@
-// package server;
+package server;
 
 public interface Flag {
 	final int LOGIN = 1;

@@ -204,6 +204,32 @@ class Login extends JFrame implements Flag {
 			}
 		});
 
+		usernameTextArea.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				super.keyPressed(e);
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					if (IsSending == 1) {
+						return;
+					}
+					if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
+							|| passwordField.getPassword().length == 0) {
+						return;
+					}
+					try {
+						s.getMsgToServer().writeInt(1);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					sendMesg messenger = new sendMesg(usernameTextArea.getText(),
+							String.valueOf(passwordField.getPassword()), 1);
+					new Thread(messenger).start();
+				} else if (e.getKeyCode() == KeyEvent.VK_TAB) {// 可能还有问题，用户名后可能有\t和\n
+					passwordField.requestFocus();
+				}
+			}
+		});
+
 		passwordField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {

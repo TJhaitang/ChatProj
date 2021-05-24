@@ -1,4 +1,4 @@
-// package server;
+package server;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -56,7 +56,7 @@ public class ChatServer {
 					byte[] pswdCode = TransPswd(password);
 					// 为了我们的文件目录统一，使用getProperty得到项目目录
 					File user = new File(
-							System.getProperty("user.dir") + "src/server/users/" + username + "/userinfo.key");
+							System.getProperty("user.dir") + "/src/server/users/" + username + "/userinfo.key");
 					if (sign == Flag.LOGIN) {// 登录
 						if (!user.exists()) {// 如果没有此账号
 							t.getMsgToClient().writeInt(Flag.FAIL);
@@ -102,7 +102,7 @@ public class ChatServer {
 			}
 		}
 
-		private byte[] TransPswd(String password) {
+		private byte[] TransPswd(String password) {// 将明文密码转为md5码
 			MessageDigest md5 = null;
 			try {
 				md5 = MessageDigest.getInstance("MD5");
@@ -119,6 +119,7 @@ public class ChatServer {
 			try {
 				new File(f.getAbsolutePath() + "/groupList.txt").createNewFile();
 				new File(f.getAbsolutePath() + "/friendList.txt").createNewFile();
+				new File(f.getAbsolutePath() + "/MsgQ.txt").createNewFile();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -131,11 +132,14 @@ public class ChatServer {
 		Sender sender = new Sender();
 		Queue<MsgPair> MsgQueue = new LinkedList<MsgPair>();
 		int go = 1;
+		File filePath;
 
 		HandleASession(TargetConnection t) {
 			this.t = t;
 			new Thread(reciever).start();
 			new Thread(sender).start();
+			// sender.display();
+			filePath = new File(System.getProperty("user.dir") + "/src/server/users/" + t.getUsername());
 		}
 
 		private class MsgPair {
@@ -152,7 +156,7 @@ public class ChatServer {
 
 			@Override
 			public void run() {
-				while (true) {
+				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					int sign;
 					try {
 						sign = t.getMsgFromClient().readInt();
@@ -225,6 +229,7 @@ public class ChatServer {
 
 			@Override
 			public void run() {
+				this.display();
 				while (go == 1) {
 					try {
 						Thread.sleep(5);// 为啥能用了？
@@ -232,7 +237,7 @@ public class ChatServer {
 						e1.printStackTrace();
 					}
 					if (!MsgQueue.isEmpty()) {// 这个改成锁
-						System.out.println("排好队！");
+						// System.out.println("排好队！");
 						MsgPair mp = MsgQueue.poll();
 						try {
 							t.getMsgToClient().writeInt(mp.flag);
@@ -241,6 +246,33 @@ public class ChatServer {
 							e.printStackTrace();
 						}
 					}
+				}
+			}
+
+			public void display() {
+				// System.out.println("读文件！");
+				File msgQ = new File(filePath, "MsgQ.txt");// 改文件应该是从上向下读取的
+				BufferedReader br = null;
+				try {
+					br = new BufferedReader(new FileReader(msgQ));
+				} catch (FileNotFoundException e) {// 不要没有该文件
+					e.printStackTrace();
+					try {
+						msgQ.createNewFile();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+				int sign;
+				String str;
+				try {
+					while ((str = br.readLine()) != null) {
+						sign = Integer.parseInt(str);
+						str = br.readLine();
+						MsgQueue.add(new MsgPair(sign, str));
+					}
+				} catch (IOException e) {
+					System.out.println(t.getUsername() + "display——done!");
 				}
 			}
 

@@ -92,6 +92,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 				// -//发消息
 			}
 		});
+		sendButton.setMargin(new Insets(0, 0, 0, 0));
+		voiceButton.setMargin(new Insets(0, 0, 0, 0));
 
 		buttonPanel_text.setLayout(new GridLayout(2, 1));
 		buttonPanel_text.add(voiceButton);
@@ -130,6 +132,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 				StyleConstants.setForeground(attr, Color.black);
 				MsgLabel.setParagraphAttributes(attr, false);
 				document.insertString(document.getLength(), name + " " + ss[0] + "\n", null);
+				if (true)
+					;
 				StyleConstants.setForeground(attr, Color.gray);
 				MsgLabel.setParagraphAttributes(attr, false);
 				String msgStr = ss[3].replaceAll("<br>", "\n");
@@ -140,13 +144,38 @@ abstract class ChatWindow extends JFrame implements Flag {
 			}
 		} else if (ss[4].equals("IMG")) {
 			try {
+				StyledDocument document = (StyledDocument) MsgLabel.getDocument();
+				StyleConstants.setForeground(attr, Color.gray);
 				MsgLabel.setParagraphAttributes(attr, false);
-				htmledit.insertHTML(text_html, MsgLabel.getCaretPosition(),
-						"<br><img src='file:///" + s.getParentFile().getParent() + "/image/" + ss[3] + "' >", 0, 0,
-						HTML.Tag.HTML);
-			} catch (BadLocationException | IOException e) {
+				document.insertString(document.getLength(), name + " " + ss[0] + "\n", null);
+				// MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
+				// htmledit.insertHTML(text_html, MsgLabel.getCaretPosition() - 1,
+				// "<img src='file:///" + s.getParentFile().getParent() + "/image/" + ss[3] + "'
+				// >", 0, 0,
+				// HTML.Tag.HTML);
+				// System.out.println(MsgLabel.getCaretPosition());
+				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
+				ImageIcon img = new ImageIcon(s.getParentFile().getParent() + "/image/" + ss[3]);
+				MsgLabel.insertIcon(ResizeImg(img));
+				document.insertString(document.getLength(), "\n ", null);
+				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
+			} catch (BadLocationException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+
+	protected ImageIcon ResizeImg(ImageIcon im) {
+		int width = im.getIconWidth();
+		int height = im.getIconHeight();
+		int sum = width + height;
+		if (sum > 350) {
+			width = (int) (350.0 * width / sum);
+			height = (int) (350.0 * height / sum);
+			Image img = im.getImage().getScaledInstance(width, height, Image.SCALE_DEFAULT);
+			return new ImageIcon(img);
+		} else {
+			return im;
 		}
 	}
 
@@ -215,7 +244,6 @@ class FriendWindow extends ChatWindow {
 			} catch (IOException ioException) {
 				ioException.printStackTrace();
 			}
-			e.printStackTrace();
 		}
 		String str;
 		try {
