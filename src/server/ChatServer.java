@@ -142,6 +142,25 @@ public class ChatServer {
 			filePath = new File(System.getProperty("user.dir") + "/src/server/users/" + t.getUsername());
 		}
 
+		private void AddMsgToFile(String username, MsgPair mp) {// 图片怎么办？，但应该差别不大-图片另说//目前仅考虑了TEXT
+			File file = new File(filePath.getParentFile(), username + "/MsgQ.txt");
+			if (!file.exists()) {
+				try {
+					file.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			BufferedWriter bw = null;
+			try {
+				bw = new BufferedWriter(new FileWriter(file));
+				bw.write("" + mp.flag + "\n");
+				bw.write(mp.MsgString + "\n");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
 		private class MsgPair {
 			int flag;
 			String MsgString;
@@ -193,7 +212,7 @@ public class ChatServer {
 					e.printStackTrace();
 				}
 				// String[] split = Msg.split("\\|");
-				if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友
+				if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友-按理说不会有问题，但万一呢
 					if (UserMap.containsKey(TargetName)) {
 						System.out.println("向" + TargetName + "发送信息");
 						HandleASession h2 = UserMap.get(TargetName);
@@ -211,9 +230,6 @@ public class ChatServer {
 				return true;
 			}
 
-			private void AddMsgToFile(String username, MsgPair mp) {// 图片怎么办？，但应该差别不大
-
-			}
 		}
 
 		private class Sender implements Runnable {
@@ -243,7 +259,9 @@ public class ChatServer {
 							t.getMsgToClient().writeInt(mp.flag);
 							t.getMsgToClient().writeUTF(mp.MsgString);// 失败后写文件(吗？)
 						} catch (IOException e) {// 写文件
+							AddMsgToFile(t.getUsername(), mp);
 							e.printStackTrace();
+							System.out.println("Send to " + t.getUsername() + " error!");
 						}
 					}
 				}

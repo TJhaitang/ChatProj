@@ -136,7 +136,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 					;
 				StyleConstants.setForeground(attr, Color.gray);
 				MsgLabel.setParagraphAttributes(attr, false);
-				String msgStr = ss[3].replaceAll("<br>", "\n");
+				String msgStr = ss[3].replaceAll("</or>", "\\|");
+				msgStr = msgStr.replaceAll("<br>", "\n");
 				document.insertString(document.getLength(), msgStr + "\n", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
 			} catch (BadLocationException e) {
@@ -187,8 +188,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 	private class Sender implements Runnable {
 		String str;
 
-		Sender(String str) {
-			this.str = str;
+		Sender(String str1) {
+			str = str1.replaceAll("\\|", "</or>");//
 		}
 
 		@Override
