@@ -19,8 +19,8 @@ public class ChatClient {
 
 	ChatClient() {
 		try {
-			MsgSocket = new Socket("localhost", 50004);// 建立连接
-			FileSocket = new Socket("localhost", 50004);
+			MsgSocket = new Socket("localhost", 12138);// 建立连接
+			FileSocket = new Socket("localhost", 12138);
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
 			System.exit(0);
@@ -52,8 +52,8 @@ class Login extends JFrame implements Flag {
 	private JLabel label2 = new JLabel("password");
 	private JButton loginButton = new JButton("登录");
 	private JButton SigninButton = new JButton("注册");
-	private final JTextArea usernameTextArea = new JTextArea();
-	private final JPasswordField passwordField = new JPasswordField();
+	private final JTextArea usernameTextArea = new JTextArea("admin");
+	private final JPasswordField passwordField = new JPasswordField("123456");// 记得删掉
 
 	private int IsSending = 0;
 

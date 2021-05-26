@@ -13,7 +13,7 @@ import java.util.HashMap;
 // 按钮连接到聊天框、朋友圈界面
 class ClientWindow extends JFrame implements Flag {
 
-	HashMap<String, FriendWindow> friendWindows = new HashMap<>();
+	HashMap<String, ChatWindow> chatWindows = new HashMap<>();// 这里改成了ChatWindow
 	private final ServerConnection sc;
 	ClientWindow cw = this;
 
@@ -64,81 +64,104 @@ class ClientWindow extends JFrame implements Flag {
 		switch (id) {
 		case FRIENDPANE -> {
 			createPane(tabbedPane, new MetalIconFactory.TreeControlIcon(true), "friendList.txt", "好友列表",
-					"这里有你和所有好友聊天的信息");
+					"这里有你和所有好友聊天的信息", FRIENDPANE);
 		}
 		case GROUPPANE -> {
-			createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(), "groupList.txt", "群组列表", "这里有你和所有好友聊天的信息");
+			createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(), "groupList.txt", "群组列表", "这里有你和所有好友聊天的信息",
+					GROUPPANE);
 		}
 		case PYQ -> {
-			createPane(tabbedPane, new MetalIconFactory.FolderIcon16(), "friendList.txt", "朋友圈", "这里有你和所有群组的信息");
+			createPane(tabbedPane, new MetalIconFactory.FolderIcon16(), "friendList.txt", "朋友圈", "这里有你和所有群组的信息", PYQ);
 		}
 		case RECENTPANE -> {
-			createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(), "", "最近消息", "这里有你和所有最近聊天的信息");
+			createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(), "", "最近消息", "这里有你和所有最近聊天的信息", RECENTPANE);
 		}
 		}
 	}
 
-	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip) {
-		JPanel friendPane = new JPanel();
-		friendPane.setLayout(new GridLayout(20, 1));
+	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip, int sign) {
+		JPanel TargetPane = new JPanel();
+		TargetPane.setLayout(new GridLayout(20, 1));
 		BufferedReader br;
 		try {
 			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的，尽量不要重新写_改了个地方
 			String tmp;
 			while ((tmp = br.readLine()) != null) {
-				JComponent panel = createFriendPanel(tmp);
-				friendPane.add(panel);
+				if (sign == FRIENDPANE) {
+					TargetPane.add(new chatPanel(tmp, tmp, sign));
+				} else if (sign == GROUPPANE) {
+					String name = br.readLine();
+					TargetPane.add(new chatPanel(name, tmp, sign));
+				}
 			}
 			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		JScrollPane scrollPane = new JScrollPane(friendPane);
+		JScrollPane scrollPane = new JScrollPane(TargetPane);// 这里滚不起来，应该是tabbedPane的大小问题
 		tabbedPane.addTab(title, paneIcon, scrollPane, tip);
 	}
 
 	public void deleteWindow(String ID) {
-		friendWindows.remove(ID);
+		chatWindows.remove(ID);
 		// System.out.println(friendWindows.size());
 	}
 
-	protected JComponent createFriendPanel(String text) {
-		JPanel panel = new JPanel(false);
-		JLabel filler = new JLabel(text);
-		filler.setHorizontalAlignment(JLabel.CENTER);
-		panel.setLayout(new GridLayout(1, 1));
-		panel.add(filler);
-		panel.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (friendWindows.containsKey(text)) {
-					friendWindows.get(text).setVisible(true);
-				} else {
-					friendWindows.put(text, new FriendWindow(sc, text, cw));
+	class chatPanel extends JPanel {// 这是选项卡类，在这里面实现对好友、群组、最近消息框的创建
+		chatPanel panel = this;
+		String TargetId = "";
+		String TargetName = "";
+		int sign;
+		JLabel filler;
+
+		chatPanel() {
+			panel.setLayout(new GridLayout(1, 1));
+			panel.setBackground(Color.white);
+			this.addMouseListener(new MouseListener() {
+				@Override
+				public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
+					if (chatWindows.containsKey(TargetId)) {
+						chatWindows.get(TargetId).setVisible(true);
+					} else {
+						if (sign == FRIENDPANE) {
+							chatWindows.put(TargetId, new FriendWindow(sc, TargetId, cw));
+						} else if (sign == GROUPPANE) {
+							chatWindows.put(TargetId, new GroupWindow(sc, TargetId, TargetName, cw));
+						}
+					}
 				}
-			}
 
-			@Override
-			public void mousePressed(MouseEvent e) {
-				panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-			}
+				@Override
+				public void mousePressed(MouseEvent e) {
+					panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+				}
 
-			@Override
-			public void mouseReleased(MouseEvent e) {
-				panel.setCursor(Cursor.getDefaultCursor());
-			}
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					panel.setCursor(Cursor.getDefaultCursor());
+				}
 
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				panel.setBackground(Color.lightGray);
-			}
+				@Override
+				public void mouseEntered(MouseEvent e) {
+					panel.setBackground(Color.lightGray);
+				}
 
-			@Override
-			public void mouseExited(MouseEvent e) {
-				panel.setBackground(Color.white);
-			}
-		});
-		return panel;
+				@Override
+				public void mouseExited(MouseEvent e) {
+					panel.setBackground(Color.white);
+				}
+			});
+		}
+
+		chatPanel(String name, String id, int sign) {
+			this();
+			this.TargetId = id;
+			this.TargetName = name;
+			this.sign = sign;
+			filler = new JLabel(name);
+			panel.add(filler);
+			filler.setHorizontalAlignment(JLabel.CENTER);
+		}
 	}
 
 	class HandleASession implements Runnable {// 在这里实现信息交互
@@ -165,8 +188,8 @@ class ClientWindow extends JFrame implements Flag {
 						message = s.getMsgFromServer().readUTF();
 						String[] split = message.split("\\|");
 						// 若为已打开窗口则写入窗口中
-						if (friendWindows.containsKey(split[1])) {
-							friendWindows.get(split[1]).AddMessage(message);
+						if (chatWindows.containsKey(split[1])) {
+							chatWindows.get(split[1]).AddMessage(message);
 						}
 						// 写入本地文件
 						File chatRecord = new File(s.getParentFile(),

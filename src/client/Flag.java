@@ -10,6 +10,9 @@ public interface Flag {
 	final int SENDFILE = 3;
 	final int SENDTEXT = 4;
 
+	final int SENDGROUP = 16;
+	final int SENDFRIEND = 17;
+
 	final int ADDFRIEND = 5;
 	final int ACCEPTFRIEND = 15;
 	final int CREATEGROUP = 6;

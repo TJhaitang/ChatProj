@@ -1,4 +1,4 @@
-package server;
+// package server;
 
 public interface Flag {
 	final int LOGIN = 1;
@@ -10,13 +10,18 @@ public interface Flag {
 	final int SENDFILE = 3;
 	final int SENDTEXT = 4;
 
+	final int SENDGROUP = 16;
+	final int SENDFRIEND = 17;
+
 	final int ADDFRIEND = 5;
+	final int ACCEPTFRIEND = 15;
 	final int CREATEGROUP = 6;
 	final int DELETEFRIEND = 7;
 	final int DELETEGROUP = 8;
 	final int QUITGROUP = 9;
-	final int FRIENDPANE = 10;
+
+	final int FRIENDPANE = 14;
 	final int GROUPPANE = 11;
-	final int RECENTPANE = 12;
-	final int PYQ = 13;
+	final int PYQ = 12;
+	final int RECENTPANE = 13;
 }

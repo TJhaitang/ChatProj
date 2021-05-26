@@ -1,4 +1,4 @@
-package server;
+// package server;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -55,8 +55,7 @@ public class ChatServer {
 					password = t.getMsgFromClient().readUTF();
 					byte[] pswdCode = TransPswd(password);
 					// 为了我们的文件目录统一，使用getProperty得到项目目录
-					File user = new File(
-							System.getProperty("user.dir") + "/src/server/users/" + username + "/userinfo.key");
+					File user = new File(System.getProperty("user.dir") + "/users/" + username + "/userinfo.key");
 					if (sign == Flag.LOGIN) {// 登录
 						if (!user.exists()) {// 如果没有此账号
 							t.getMsgToClient().writeInt(Flag.FAIL);
@@ -139,7 +138,7 @@ public class ChatServer {
 			new Thread(reciever).start();
 			new Thread(sender).start();
 			// sender.display();
-			filePath = new File(System.getProperty("user.dir") + "/src/server/users/" + t.getUsername());
+			filePath = new File(System.getProperty("user.dir") + "/users/" + t.getUsername());
 		}
 
 		private void AddMsgToFile(String username, MsgPair mp) {// 图片怎么办？，但应该差别不大-图片另说//目前仅考虑了TEXT
@@ -180,12 +179,13 @@ public class ChatServer {
 					try {
 						sign = t.getMsgFromClient().readInt();
 						switch (sign) {
-						case Flag.SENDTEXT: {
-							SendMsg();
+						case Flag.SENDFRIEND: {
+							SendMsg(Flag.SENDFRIEND);
 							break;
 						}
-						case Flag.SENDFILE:/* 往下先等等 */
+						case Flag.SENDGROUP:/* 往下先等等 */
 						{
+							SendMsg(Flag.SENDGROUP);
 							break;
 						}
 						default:
@@ -202,7 +202,7 @@ public class ChatServer {
 				}
 			}
 
-			private void SendMsg()// 发消息用不同函数实现可以么？是不是有点不优雅
+			private void SendMsg(int flag)// 发消息用不同函数实现可以么？是不是有点不优雅
 			{// 先直接发，后面写存文件待发送
 				String TargetName = null, Msg = null;
 				try {

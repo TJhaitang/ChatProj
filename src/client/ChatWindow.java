@@ -37,7 +37,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 	protected JButton fileButton = new JButton("文件");
 
 	protected ServerConnection s;
-	protected String Target;
+	protected String TargetId;
 
 	protected ClientWindow cw;
 
@@ -113,7 +113,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 	ChatWindow(ServerConnection s, String tar, ClientWindow cw) {
 		this();
 		this.s = s;
-		this.Target = tar;
+		this.TargetId = tar;
 		this.cw = cw;
 	}
 
@@ -184,6 +184,17 @@ abstract class ChatWindow extends JFrame implements Flag {
 
 	abstract void sendMsg(String s);// 发信，与服务器做交互
 
+	// 不能删，不然就关闭全部窗口了
+	protected void processWindowEvent(WindowEvent e) {
+		if (e.getID() == WindowEvent.WINDOW_CLOSING) {
+			// System.out.println("Close");
+			this.dispose();
+			cw.deleteWindow(TargetId);// 对于好友来说，T为好友名；对于群组，T为群组ID
+		} else {
+			super.processWindowEvent(e);
+		}
+	}
+
 	// 发信工具类，收信类放到用户界面内
 	private class Sender implements Runnable {
 		String str;
@@ -201,6 +212,65 @@ abstract class ChatWindow extends JFrame implements Flag {
 			sendMsg(str);
 		}
 	}
+}
+
+class GroupWindow extends ChatWindow {
+	String GroupName;
+
+	GroupWindow(ServerConnection s, String GroupId, String targetName, ClientWindow cw) {
+		super(s, GroupId, cw);
+		this.GroupName = targetName;
+		this.setTitle(GroupName);
+		display();
+		this.setVisible(true);
+	}
+
+	@Override
+	void display() {
+		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(chatRecord));
+		} catch (FileNotFoundException e) {
+			JOptionPane.showMessageDialog(this, "消息记录不存在！");
+			try {
+				chatRecord.createNewFile();
+			} catch (IOException ioException) {
+				ioException.printStackTrace();
+			}
+		}
+		String str;
+		try {
+			while ((str = br.readLine()) != null) {
+				AddMessage(str);// 这里好像有点问题
+			}
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	void sendMsg(String str) {
+		try {
+			s.getMsgToServer().writeInt(Flag.SENDGROUP);
+			s.getMsgToServer().writeUTF(TargetId);
+			s.getMsgToServer().writeUTF(str);
+			int a = Flag.SUCCESS;
+			// int a = s.getMsgFromServer().readInt();
+			if (a != Flag.SUCCESS) {
+				JOptionPane.showMessageDialog(MsgList, "发送失败");
+			} else {
+				File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/groupMsg/" + TargetId + ".txt");
+				PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+				pw.println(str);
+				pw.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 }
 
 class FriendWindow extends ChatWindow {
@@ -221,20 +291,9 @@ class FriendWindow extends ChatWindow {
 		this.setVisible(true);
 	}
 
-	// 不能删，不然就关闭全部窗口了
-	protected void processWindowEvent(WindowEvent e) {
-		if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-
-			this.dispose();
-			cw.deleteWindow(Target);// 对于好友来说，T为好友名；对于群组，T为群组ID
-		} else {
-			super.processWindowEvent(e);
-		}
-	}
-
 	@Override
 	void display() {// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
-		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + Target + ".txt");// 此文件在加好友时创建,文件路径记得改
+		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(chatRecord));
@@ -249,7 +308,7 @@ class FriendWindow extends ChatWindow {
 		String str;
 		try {
 			while ((str = br.readLine()) != null) {
-				AddMessage(str);
+				AddMessage(str);// 这里好像有点问题
 			}
 			br.close();
 		} catch (IOException e) {
@@ -260,15 +319,15 @@ class FriendWindow extends ChatWindow {
 	@Override
 	void sendMsg(String str) {
 		try {
-			s.getMsgToServer().writeInt(Flag.SENDTEXT);
-			s.getMsgToServer().writeUTF(Target);
+			s.getMsgToServer().writeInt(Flag.SENDFRIEND);
+			s.getMsgToServer().writeUTF(TargetId);
 			s.getMsgToServer().writeUTF(str);
 			int a = Flag.SUCCESS;
 			// int a = s.getMsgFromServer().readInt();
 			if (a != Flag.SUCCESS) {
 				JOptionPane.showMessageDialog(MsgList, "发送失败");
 			} else {
-				File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + Target + ".txt");
+				File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + TargetId + ".txt");
 				PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
 				pw.println(str);
 				pw.close();
