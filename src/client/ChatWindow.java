@@ -1,12 +1,12 @@
 package client;
 
-// import server.Flag;
-
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -14,10 +14,6 @@ import java.awt.event.WindowEvent;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
 
 // 私聊 创建好友聊天界面，将本地聊天数据读取到这里，按照时间顺序制作窗口
 abstract class ChatWindow extends JFrame implements Flag {
@@ -75,8 +71,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 		this.add(TextBox);
 
 		sendButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			@Override public void actionPerformed(ActionEvent e) {
 				String text = Text.getText();
 				if (text == null || text.equals("")) {
 					return;
@@ -87,8 +82,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 			}
 		});
 		voiceButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			@Override public void actionPerformed(ActionEvent e) {
 				// -//发消息
 			}
 		});
@@ -103,11 +97,6 @@ abstract class ChatWindow extends JFrame implements Flag {
 				Toolkit.getDefaultToolkit().getImage(System.getProperty("user.dir") + "/src/client/system/icon.png"));
 		this.add(buttonPanel_text);
 
-		// this.addWindowListener(new WindowAdapter() {
-		// public void windowClosing(WindowEvent e) {
-		// System.exit(0);
-		// }
-		// });
 	}
 
 	ChatWindow(ServerConnection s, String tar, ClientWindow cw) {
@@ -132,8 +121,9 @@ abstract class ChatWindow extends JFrame implements Flag {
 				StyleConstants.setForeground(attr, Color.black);
 				MsgLabel.setParagraphAttributes(attr, false);
 				document.insertString(document.getLength(), name + " " + ss[0] + "\n", null);
-				if (true)
+				if (true) {
 					;
+				}
 				StyleConstants.setForeground(attr, Color.gray);
 				MsgLabel.setParagraphAttributes(attr, false);
 				String msgStr = ss[3].replaceAll("</or>", "\\|");
@@ -203,8 +193,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 			str = str1.replaceAll("\\|", "</or>");//
 		}
 
-		@Override
-		public void run() {
+		@Override public void run() {
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
 			str = str.replaceAll("\n", "<br>");
 			str = df.format(new Date()) + "|" + s.getSelfName() + "|" + "0" + "|" + str + "|TEXT";// 0为未读
@@ -225,9 +214,9 @@ class GroupWindow extends ChatWindow {
 		this.setVisible(true);
 	}
 
-	@Override
-	void display() {
-		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+	@Override void display() {
+		File chatRecord = new File(s.getParentFile(),
+				s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(chatRecord));
@@ -250,8 +239,7 @@ class GroupWindow extends ChatWindow {
 		}
 	}
 
-	@Override
-	void sendMsg(String str) {
+	@Override void sendMsg(String str) {
 		try {
 			s.getMsgToServer().writeInt(Flag.SENDGROUP);
 			s.getMsgToServer().writeUTF(TargetId);
@@ -291,9 +279,10 @@ class FriendWindow extends ChatWindow {
 		this.setVisible(true);
 	}
 
-	@Override
-	void display() {// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
-		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+	@Override void display() {
+		// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
+		File chatRecord = new File(s.getParentFile(),
+				s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(chatRecord));
@@ -316,8 +305,7 @@ class FriendWindow extends ChatWindow {
 		}
 	}
 
-	@Override
-	void sendMsg(String str) {
+	@Override void sendMsg(String str) {
 		try {
 			s.getMsgToServer().writeInt(Flag.SENDFRIEND);
 			s.getMsgToServer().writeUTF(TargetId);
