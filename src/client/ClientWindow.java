@@ -64,35 +64,37 @@ class ClientWindow extends JFrame implements Flag {
 
 	}
 
-	private Boolean checkUpdate(ServerConnection s) {
+	private boolean checkUpdate(ServerConnection s) {
 		String[] files = { "friendList.txt", "groupList.txt" };
+		String lastLine;
 		try {
+			// 发送请求，发送最后一行，接受信号
 			s.getFileToServer().writeInt(Flag.CHECKUPDATE);
-
-			if (!s.uploadFile(myPath + "/update.txt")) {
-				return false;
-			}
-			int a;
-			String tmp;
-			while ((a = s.getFileFromServer().readInt()) != -1) {
+			for (String file : files) {
+				lastLine = MyUtil.readLastLine(new File(myPath + "/" + file), null);
+				if (lastLine == null) {
+					return false;
+				}
+				s.getFileToServer().writeUTF(lastLine);
+				// 接受是否更新的信号
+				int a = s.getFileFromServer().readInt();
 				switch (a) {
+				//更新
 				case Flag.LOCALUPDATE -> {
-					// 更新文件
-					// 先写名字，再写行号，最后写文件内容
-					while (!"end".equals(tmp = s.getFileFromServer().readUTF())) {
-						String name = tmp.split("\\|")[0];
-						int i = s.getFileFromServer().readInt();
-						MyUtil.fileReplaceLine(myPath + "/" + name, i, tmp);
-						s.receiveFile(myPath + "/cache/" + name);
-						Files.copy(new File(myPath + "/cache/" + name).toPath(), new File(myPath + "/" + name).toPath(),
-								StandardCopyOption.REPLACE_EXISTING);
-					}
+					String cachePath = myPath + "/cache/" + file;
+					s.receiveFile(cachePath);
+					Files.copy(new File(cachePath).toPath(), new File(myPath + "/" + file).toPath(),
+							StandardCopyOption.REPLACE_EXISTING);
 				}
 				case Flag.NOUPDATE -> {
 				}
 				default -> throw new IllegalStateException("Unexpected value: " + a);
 				}
 			}
+			// 结束后,发送end
+			s.getFileToServer().writeUTF("end");
+
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			return false;

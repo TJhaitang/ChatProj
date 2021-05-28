@@ -1,13 +1,13 @@
 package server;
 
+import sun.nio.ch.IOStatus;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.security.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 public class ChatServer {
 	HashMap<String, HandleASession> UserMap = new HashMap<>();
@@ -72,7 +72,9 @@ public class ChatServer {
 							System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":登录为 " + username);
 							userPath = System.getProperty("user.dir") + "/src/server/users/" + username;
 							// 检查更新
-							checkUpdate(t);
+							if (!checkUpdate(t)) {
+								System.out.println("更新失败-1");
+							}
 							// 开始消息传输
 							HandleASession hand = new HandleASession(t);//
 							UserMap.put(username, hand);// 将用户放入hashmap__还需要拿出来
@@ -107,29 +109,29 @@ public class ChatServer {
 			}
 		}
 
-		private void checkUpdate(TargetConnection t) {
-			String path = userPath + "/cache/update.txt";
-			String tmp;
-			t.receiveFile(path);
-			int i = 0;
-			// 需要更新
-			// 先写名字，再写行号，最后写文件内容
+		private boolean checkUpdate(TargetConnection t) {
+			String[] files = { "friendList.txt", "groupList.txt" };
+			boolean flag = true;
+			String code;
 			try {
-				t.getFileToClient().writeInt(Flag.LOCALUPDATE);
-				if (MyUtil.compareFile(path, userPath + "/update.txt")) {
-					System.out.println("需要更新");
-					BufferedReader br1 = new BufferedReader(new FileReader(path));
-					BufferedReader br2 = new BufferedReader(new FileReader(userPath + "/update.txt"));
-					while (!br1.readLine().equals(tmp = br2.readLine())) {
-						t.getFileToClient().writeUTF(tmp);
-						t.getFileToClient().writeInt(i++);
-						t.sendFile(userPath + "/" + tmp.split("\\|")[0]);
+				int i = 0;
+				// 首先接受hashcode,若相同则返回不更新，不同则返回更新信号，并发回文件
+				if (t.getFileFromClient().readInt() == Flag.CHECKUPDATE) {
+					while (!"end".equals(code = t.getFileFromClient().readUTF())) {
+						if (Objects.equals(MyUtil.readLastLine(new File(userPath + "/" + files[i]), null), code)) {
+							t.getFileToClient().writeInt(Flag.NOUPDATE);
+						} else {
+							t.getFileToClient().writeInt(Flag.LOCALUPDATE);
+							t.sendFile(userPath + "/" + files[i]);
+						}
+						i++;
 					}
 				}
 			} catch (IOException e) {
-				System.out.println("更新失败");
+				System.out.println("更新失败-2");
+				flag = false;
 			}
-
+			return flag;
 		}
 
 		private byte[] TransPassword(String password) {// 将明文密码转为md5码
@@ -167,9 +169,10 @@ public class ChatServer {
 
 		HandleASession(TargetConnection t) {
 			this.t = t;
+			filePath = new File(System.getProperty("user.dir") + "/src/server/users/" + t.getUsername());
 			new Thread(receiver).start();
 			new Thread(sender).start();
-			filePath = new File(System.getProperty("user.dir") + "/src/server/users/" + t.getUsername());
+
 		}
 
 		private void AddMsgToFile(String username, MsgPair mp) {// 图片怎么办？，但应该差别不大-图片另说//目前仅考虑了TEXT
@@ -335,39 +338,53 @@ class TargetConnection {// 建立一个类用以存放与用户的连接
 	private Socket MsgSocket;
 	private Socket FileSocket;
 	private String username;
-	private DataInputStream MsgFromClient;
-	private DataOutputStream MsgToClient;
-	private DataInputStream FileFromClient;
-	private DataOutputStream FileToClient;
+	private DataInputStream msgFromClient;
+	private DataOutputStream msgToClient;
+	private DataInputStream fileFromClient;
+	private DataOutputStream fileToClient;
 
 	TargetConnection(Socket msg, Socket file) {
 		this.MsgSocket = msg;
 		this.FileSocket = file;
 		try {
-			MsgFromClient = new DataInputStream(MsgSocket.getInputStream());
-			MsgToClient = new DataOutputStream(MsgSocket.getOutputStream());
-			FileFromClient = new DataInputStream(FileSocket.getInputStream());
-			FileToClient = new DataOutputStream(FileSocket.getOutputStream());
+			msgFromClient = new DataInputStream(MsgSocket.getInputStream());
+			msgToClient = new DataOutputStream(MsgSocket.getOutputStream());
+			fileFromClient = new DataInputStream(FileSocket.getInputStream());
+			fileToClient = new DataOutputStream(FileSocket.getOutputStream());
 		} catch (IOException e2) {
 			e2.printStackTrace();
 		}
 	}
 
-	void sendFile(String cachePosition) {
-
+	void sendFile(String filePath) {
+		try {
+			// 先发送文件大小
+			long length = new File(filePath).length();
+			fileToClient.writeLong(length);
+			// 发送文件
+			FileInputStream fis = new FileInputStream(filePath);
+			byte[] buffer = new byte[8192];
+			int read;
+			while ((read = fis.read(buffer, 0, 8192)) >= 0) {
+				fileToClient.write(buffer, 0, read);
+			}
+			fis.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
-	void receiveFile(String cachePosition) {
-		DataInputStream fileFromClient = getFileFromClient();
+	void receiveFile(String filePath) {
 		try {
-			FileOutputStream fos = new FileOutputStream(cachePosition);
-			int fileSize = 0;
-			byte[] buffer = new byte[1024 * 1024];
-			int size;
-			while ((size = fileFromClient.read(buffer)) != -1) {
-				fos.write(buffer, 0, size);
-				fileSize += size;
-				System.out.println("当前大小：" + fileSize);
+			// 先得到长度
+			long length = fileFromClient.readLong();
+			FileOutputStream fos = new FileOutputStream(filePath);
+			byte[] buffer = new byte[8192];
+			int read, transferred = 0;
+			while (length > transferred) {
+				read = fileFromClient.read(buffer, 0, 8192);
+				fos.write(buffer, 0, read);
+				transferred += read;
 			}
 			fos.close();
 		} catch (IOException e) {
@@ -381,9 +398,9 @@ class TargetConnection {// 建立一个类用以存放与用户的连接
 		int rand = (int) (Math.random() * 100);
 		int tip = Flag.FAIL;
 		try {
-			MsgToClient.writeInt(rand);
-			FileToClient.writeInt(rand);
-			tip = MsgFromClient.readInt();
+			msgToClient.writeInt(rand);
+			fileToClient.writeInt(rand);
+			tip = msgFromClient.readInt();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -399,19 +416,19 @@ class TargetConnection {// 建立一个类用以存放与用户的连接
 	}
 
 	DataInputStream getMsgFromClient() {
-		return MsgFromClient;
+		return msgFromClient;
 	}
 
 	DataOutputStream getMsgToClient() {
-		return MsgToClient;
+		return msgToClient;
 	}
 
 	DataInputStream getFileFromClient() {
-		return FileFromClient;
+		return fileFromClient;
 	}
 
 	DataOutputStream getFileToClient() {
-		return FileToClient;
+		return fileToClient;
 	}
 
 	Socket getMsgSocket() {

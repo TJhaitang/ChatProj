@@ -194,12 +194,12 @@ abstract class ChatWindow extends JFrame implements Flag {
 		}
 
 		@Override public void run() {
-			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
 			str = str.replaceAll("\n", "<br>");
-			str = df.format(new Date()) + "|" + s.getSelfName() + "|" + "0" + "|" + str + "|TEXT";// 0为未读
+			str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + str + "|TEXT";
 			AddMessage(str);
 			sendMsg(str);
 		}
+
 	}
 }
 

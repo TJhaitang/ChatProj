@@ -1,2 +1,0 @@
-friendList.txt
-groupList.txt
