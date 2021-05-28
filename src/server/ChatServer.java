@@ -1,4 +1,4 @@
-// package server;
+package server;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -24,12 +24,13 @@ public class ChatServer {
 				Socket file = serverSocket.accept();
 				System.out.println("client IP:" + msg.getInetAddress().getHostAddress());
 				TargetConnection t = new TargetConnection(msg, file);// 将传输过程打包
-				if (!t.check()) {// 需要在这里check还是login？
+				if (!t.check()) {
+					// 需要在这里check还是login？
 					System.out.println("client IP:" + msg.getInetAddress().getHostAddress() + "-连接失败");
 					continue;
 				}
-				Login NewClinet = new Login(t);
-				new Thread(NewClinet).start();// 建立线程实现多用户使用
+				Login NewClient = new Login(t);
+				new Thread(NewClient).start();// 建立线程实现多用户使用
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -38,6 +39,7 @@ public class ChatServer {
 
 	class Login implements Runnable, Flag {
 		TargetConnection t;
+		String userPath;
 
 		Login(TargetConnection tar) {
 			this.t = tar;
@@ -53,9 +55,10 @@ public class ChatServer {
 					sign = t.getMsgFromClient().readInt();// 接收登录or注册信号:登录1，注册2
 					username = t.getMsgFromClient().readUTF();
 					password = t.getMsgFromClient().readUTF();
-					byte[] pswdCode = TransPswd(password);
+					byte[] passwordCode = TransPassword(password);
 					// 为了我们的文件目录统一，使用getProperty得到项目目录
-					File user = new File(System.getProperty("user.dir") + "/users/" + username + "/userinfo.key");
+					File user = new File(
+							System.getProperty("user.dir") + "/src/server/users/" + username + "/userinfo.key");
 					if (sign == Flag.LOGIN) {// 登录
 						if (!user.exists()) {// 如果没有此账号
 							t.getMsgToClient().writeInt(Flag.FAIL);
@@ -64,10 +67,14 @@ public class ChatServer {
 						// 对照密码
 						FileInputStream fis = new FileInputStream(user);
 						byte[] pswd = fis.readAllBytes();
-						if (Arrays.equals(pswd, pswdCode)) {// 登录成功
+						if (Arrays.equals(pswd, passwordCode)) {// 登录成功
 							t.getMsgToClient().writeInt(Flag.SUCCESS);// 向用户发送成功信号
 							t.setUsername(username);
 							System.out.println(t.getMsgSocket().getInetAddress().getHostAddress() + ":登录为 " + username);
+							userPath = System.getProperty("user.dir") + "/src/server/users/" + username;
+							// 检查更新
+							checkUpdate(t);
+							// 开始消息传输
 							HandleASession hand = new HandleASession(t);//
 							UserMap.put(username, hand);// 将用户放入hashmap__还需要拿出来
 							fis.close();
@@ -87,7 +94,7 @@ public class ChatServer {
 						user.createNewFile();
 						// 保存密码
 						FileOutputStream fos = new FileOutputStream(user);
-						fos.write(pswdCode, 0, pswdCode.length);
+						fos.write(passwordCode, 0, passwordCode.length);
 						fos.flush();
 						fos.close();
 						CreateNewUser(parent);// 创建用户文件夹
@@ -101,7 +108,32 @@ public class ChatServer {
 			}
 		}
 
-		private byte[] TransPswd(String password) {// 将明文密码转为md5码
+		private void checkUpdate(TargetConnection t) {
+			String path = userPath + "/cache/update.txt";
+			String tmp;
+			t.receiveFile(path);
+			int i = 0;
+			// 需要更新
+			// 先写名字，再写行号，最后写文件内容
+			try {
+				t.getFileToClient().writeInt(Flag.LOCALUPDATE);
+				if (MyUtil.compareFile(path, userPath + "/update.txt")) {
+					System.out.println("需要更新");
+					BufferedReader br1 = new BufferedReader(new FileReader(path));
+					BufferedReader br2 = new BufferedReader(new FileReader(userPath + "/update.txt"));
+					while (!br1.readLine().equals(tmp = br2.readLine())) {
+						t.getFileToClient().writeUTF(tmp);
+						t.getFileToClient().writeInt(i++);
+						t.sendFile(userPath + "/" + tmp.split("\\|")[0]);
+					}
+				}
+			} catch (IOException e) {
+				System.out.println("更新失败");
+			}
+
+		}
+
+		private byte[] TransPassword(String password) {// 将明文密码转为md5码
 			MessageDigest md5 = null;
 			try {
 				md5 = MessageDigest.getInstance("MD5");
@@ -119,6 +151,7 @@ public class ChatServer {
 				new File(f.getAbsolutePath() + "/groupList.txt").createNewFile();
 				new File(f.getAbsolutePath() + "/friendList.txt").createNewFile();
 				new File(f.getAbsolutePath() + "/MsgQ.txt").createNewFile();
+				new File(f.getAbsolutePath() + "/update.txt").createNewFile();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -127,18 +160,17 @@ public class ChatServer {
 
 	class HandleASession {// 在这里实现信息交互
 		TargetConnection t;
-		Reciever reciever = new Reciever();
+		Receiver receiver = new Receiver();
 		Sender sender = new Sender();
-		Queue<MsgPair> MsgQueue = new LinkedList<MsgPair>();
+		Queue<MsgPair> MsgQueue = new LinkedList<>();
 		int go = 1;
 		File filePath;
 
 		HandleASession(TargetConnection t) {
 			this.t = t;
-			new Thread(reciever).start();
+			new Thread(receiver).start();
 			new Thread(sender).start();
-			// sender.display();
-			filePath = new File(System.getProperty("user.dir") + "/users/" + t.getUsername());
+			filePath = new File(System.getProperty("user.dir") + "/src/server/users/" + t.getUsername());
 		}
 
 		private void AddMsgToFile(String username, MsgPair mp) {// 图片怎么办？，但应该差别不大-图片另说//目前仅考虑了TEXT
@@ -150,7 +182,7 @@ public class ChatServer {
 					e.printStackTrace();
 				}
 			}
-			BufferedWriter bw = null;
+			BufferedWriter bw;
 			try {
 				bw = new BufferedWriter(new FileWriter(file));
 				bw.write("" + mp.flag + "\n");
@@ -170,10 +202,11 @@ public class ChatServer {
 			}
 		}
 
-		private class Reciever implements Runnable {
+		private class Receiver implements Runnable {
 
 			@Override
 			public void run() {
+				String path;
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					int sign;
 					try {
@@ -341,6 +374,30 @@ class TargetConnection {// 建立一个类用以存放与用户的连接
 		} catch (IOException e2) {
 			e2.printStackTrace();
 		}
+	}
+
+	void sendFile(String cachePosition) {
+
+	}
+
+	void receiveFile(String cachePosition) {
+		DataInputStream fileFromClient = getFileFromClient();
+		try {
+			FileOutputStream fos = new FileOutputStream(cachePosition);
+			int fileSize = 0;
+			byte[] buffer = new byte[1024 * 1024];
+			int size;
+			while ((size = fileFromClient.read(buffer)) != -1) {
+				fos.write(buffer, 0, size);
+				fileSize += size;
+				System.out.println("当前大小：" + fileSize);
+			}
+			fos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("缓存失败");
+		}
+
 	}
 
 	boolean check() {// 判断两个Socket是否连接到同一个用户

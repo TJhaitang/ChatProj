@@ -24,4 +24,8 @@ public interface Flag {
 	final int GROUPPANE = 11;
 	final int PYQ = 12;
 	final int RECENTPANE = 13;
+
+	final int CHECKUPDATE = 17;
+	final int LOCALUPDATE = 18;
+	final int NOUPDATE = 19;
 }

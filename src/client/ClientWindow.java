@@ -7,7 +7,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 // 传进用户ID，用s连接到服务器,创建界面（做按钮、界面列表、个人信息、朋友圈入口）
 // 按钮连接到聊天框、朋友圈界面
@@ -16,11 +20,17 @@ class ClientWindow extends JFrame implements Flag {
 	HashMap<String, ChatWindow> chatWindows = new HashMap<>();// 这里改成了ChatWindow
 	private final ServerConnection sc;
 	ClientWindow cw = this;
+	private final String myPath;
 
-	ClientWindow(ServerConnection sc) {
-		this.sc = sc;
+	ClientWindow(ServerConnection s) {
+		this.sc = s;
+		myPath = sc.getParentFile().getAbsolutePath() + "/" + sc.getSelfName();
+		// 同步消息
+		if (!checkUpdate(sc)) {
+			JOptionPane.showMessageDialog(cw, "服务器和客户端同步失败");
+		}
 		// 接受服务器消息
-		new Thread(new HandleASession(sc)).start();
+		new HandleASession(sc);
 		// 创建选项卡
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
 		tabbedPane.setPreferredSize(new Dimension(300, 300));
@@ -36,14 +46,12 @@ class ClientWindow extends JFrame implements Flag {
 		tabbedPane.setEnabledAt(1, true);
 		tabbedPane.setSelectedIndex(0);
 		tabbedPane.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseEntered(MouseEvent e) {
+			@Override public void mouseEntered(MouseEvent e) {
 				super.mouseEntered(e);
 				tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 			}
 
-			@Override
-			public void mouseExited(MouseEvent e) {
+			@Override public void mouseExited(MouseEvent e) {
 				super.mouseExited(e);
 				tabbedPane.setCursor(Cursor.getDefaultCursor());
 			}
@@ -53,11 +61,43 @@ class ClientWindow extends JFrame implements Flag {
 		setIconImage(
 				Toolkit.getDefaultToolkit().getImage(System.getProperty("user.dir") + "/src/client/system/icon.png"));
 		this.add(tabbedPane, BorderLayout.CENTER);
-		// new Thread(new C()).start();
-		// this.setBounds(100, 100, 400, 800);
-		// this.setVisible(true);
-		// this.setLayout(null);
-		// this.setResizable(true);
+
+	}
+
+	private Boolean checkUpdate(ServerConnection s) {
+		String[] files = { "friendList.txt", "groupList.txt" };
+		try {
+			s.getFileToServer().writeInt(Flag.CHECKUPDATE);
+
+			if (!s.uploadFile(myPath + "/update.txt")) {
+				return false;
+			}
+			int a;
+			String tmp;
+			while ((a = s.getFileFromServer().readInt()) != -1) {
+				switch (a) {
+				case Flag.LOCALUPDATE -> {
+					// 更新文件
+					// 先写名字，再写行号，最后写文件内容
+					while (!"end".equals(tmp = s.getFileFromServer().readUTF())) {
+						String name = tmp.split("\\|")[0];
+						int i = s.getFileFromServer().readInt();
+						MyUtil.fileReplaceLine(myPath + "/" + name, i, tmp);
+						s.receiveFile(myPath + "/cache/" + name);
+						Files.copy(new File(myPath + "/cache/" + name).toPath(), new File(myPath + "/" + name).toPath(),
+								StandardCopyOption.REPLACE_EXISTING);
+					}
+				}
+				case Flag.NOUPDATE -> {
+				}
+				default -> throw new IllegalStateException("Unexpected value: " + a);
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 
 	private void createScrollPanel(JTabbedPane tabbedPane, int id) {
@@ -84,7 +124,8 @@ class ClientWindow extends JFrame implements Flag {
 		TargetPane.setLayout(new GridLayout(20, 1));
 		BufferedReader br;
 		try {
-			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的，尽量不要重新写_改了个地方
+			br = new BufferedReader(new FileReader(
+					new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的，尽量不要重新写_改了个地方
 			String tmp;
 			while ((tmp = br.readLine()) != null) {
 				if (sign == FRIENDPANE) {
@@ -118,8 +159,7 @@ class ClientWindow extends JFrame implements Flag {
 			panel.setLayout(new GridLayout(1, 1));
 			panel.setBackground(Color.white);
 			this.addMouseListener(new MouseListener() {
-				@Override
-				public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
+				@Override public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
 					if (chatWindows.containsKey(TargetId)) {
 						chatWindows.get(TargetId).setVisible(true);
 					} else {
@@ -131,23 +171,19 @@ class ClientWindow extends JFrame implements Flag {
 					}
 				}
 
-				@Override
-				public void mousePressed(MouseEvent e) {
+				@Override public void mousePressed(MouseEvent e) {
 					panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				}
 
-				@Override
-				public void mouseReleased(MouseEvent e) {
+				@Override public void mouseReleased(MouseEvent e) {
 					panel.setCursor(Cursor.getDefaultCursor());
 				}
 
-				@Override
-				public void mouseEntered(MouseEvent e) {
+				@Override public void mouseEntered(MouseEvent e) {
 					panel.setBackground(Color.lightGray);
 				}
 
-				@Override
-				public void mouseExited(MouseEvent e) {
+				@Override public void mouseExited(MouseEvent e) {
 					panel.setBackground(Color.white);
 				}
 			});
@@ -164,67 +200,142 @@ class ClientWindow extends JFrame implements Flag {
 		}
 	}
 
-	class HandleASession implements Runnable {// 在这里实现信息交互
+	class HandleASession {
+		private File filePath;// 在这里实现信息交互
 		ServerConnection s;
+		Reciever reciever = new Reciever();
+		Sender sender = new Sender();
+		Queue<MsgPair> MsgQueue = new LinkedList<>();
+		int go = 1;
 
 		HandleASession(ServerConnection s) {
 			this.s = s;
+			new Thread(reciever).start();
+			new Thread(sender).start();
+			filePath = new File(System.getProperty("user.dir") + "/src/client/users/" + s.getSelfName());
 		}
 
-		@Override
-		public void run() {
-			String message;
-			while (true) {
+		private class MsgPair {
+			int flag;
+			String MsgString;
+
+			MsgPair(int flag, String Msg) {
+				this.flag = flag;
+				this.MsgString = Msg;
+			}
+		}
+
+		private void AddMsgToFile(String username, MsgPair mp) {// 图片怎么办？，但应该差别不大-图片另说//目前仅考虑了TEXT
+			File file = new File(filePath.getParentFile(), username + "/MsgQ.txt");
+			if (!file.exists()) {
 				try {
-					int sign = s.getMsgFromServer().readInt();
-					System.out.println("helloworld");
-					switch (sign) {
-					case SENDFILE -> {
-
-						// message = s.getFileFromServer().readNBytes();
-					}
-					case SENDTEXT -> // 先实现这部分功能尝试一下运行
-					{
-						message = s.getMsgFromServer().readUTF();
-						String[] split = message.split("\\|");
-						// 若为已打开窗口则写入窗口中
-						if (chatWindows.containsKey(split[1])) {
-							chatWindows.get(split[1]).AddMessage(message);
-						}
-						// 写入本地文件
-						File chatRecord = new File(s.getParentFile(),
-								s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
-						PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-						pw.println(message);
-						pw.close();
-						// 写入用户主窗口
-					}
-					// 收到请求加好友的信息
-					case ADDFRIEND -> {
-
-					}
-					// 收到同意加好友的信息
-					case ACCEPTFRIEND -> {
-
-					}
-					case CREATEGROUP -> {
-
-					}
-					case DELETEFRIEND -> {
-
-					}
-					case DELETEGROUP -> {
-
-					}
-					case QUITGROUP -> {
-
-					}
-					}
+					file.createNewFile();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
+			BufferedWriter bw;
+			try {
+				bw = new BufferedWriter(new FileWriter(file));
+				bw.write("" + mp.flag + "\n");
+				bw.write(mp.MsgString + "\n");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-	}
 
+		private class Reciever implements Runnable {
+
+			@Override public void run() {
+				String message;
+				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
+					int sign;
+					try {
+						sign = s.getMsgFromServer().readInt();
+						switch (sign) {
+						case SENDFILE -> {
+
+							// message = s.getFileFromServer().readNBytes();
+						}
+						case SENDTEXT -> // 先实现这部分功能尝试一下运行
+								{
+									message = s.getMsgFromServer().readUTF();
+									String[] split = message.split("\\|");
+									// 若为已打开窗口则写入窗口中
+									if (chatWindows.containsKey(split[1])) {
+										chatWindows.get(split[1]).AddMessage(message);
+									}
+									// 写入本地文件
+									File chatRecord = new File(s.getParentFile(),
+											s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
+									PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+									pw.println(message);
+									pw.close();
+									// 写入用户主窗口
+								}
+						// 收到请求加好友的信息
+						case ADDFRIEND -> {
+
+						}
+						// 收到同意加好友的信息
+						case ACCEPTFRIEND -> {
+
+						}
+						case CREATEGROUP -> {
+
+						}
+						case DELETEFRIEND -> {
+
+						}
+						case DELETEGROUP -> {
+
+						}
+						case QUITGROUP -> {
+
+						}
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
+		private class Sender implements Runnable {
+
+			public void stop() {
+				go = 0;
+			}
+
+			public void PutMsg(MsgPair ss) {
+				MsgQueue.add(ss);
+			}
+
+			@Override public void run() {
+				while (go == 1) {
+					try {
+						Thread.sleep(5);// 为啥能用了？
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+					if (!MsgQueue.isEmpty()) {
+						// 这个改成锁
+						// System.out.println("排好队！");
+						MsgPair mp = MsgQueue.poll();
+						try {
+							s.getMsgToServer().writeInt(mp.flag);
+							s.getMsgToServer().writeUTF(mp.MsgString);// 失败后写文件(吗？)
+						} catch (IOException e) {
+							// 写文件
+							AddMsgToFile(s.getSelfName(), mp);
+							e.printStackTrace();
+							System.out.println("Send to " + s.getSelfName() + " error!");
+						}
+					}
+				}
+			}
+
+		}
+
+	}
 }

@@ -3,10 +3,7 @@ package client;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
 public class ChatClient {
@@ -53,7 +50,7 @@ class Login extends JFrame implements Flag {
 	private JButton loginButton = new JButton("登录");
 	private JButton SigninButton = new JButton("注册");
 	private final JTextArea usernameTextArea = new JTextArea("admin");
-	private final JPasswordField passwordField = new JPasswordField("123456");// 记得删掉
+	private final JPasswordField passwordField = new JPasswordField("123456");
 
 	private int IsSending = 0;
 
@@ -73,11 +70,9 @@ class Login extends JFrame implements Flag {
 			s.setSelfName(username);
 			ClientWindow clientWindow = new ClientWindow(s);
 			clientWindow.addWindowListener(new WindowAdapter() {
-				@Override
-				public void windowClosing(WindowEvent e) {
+				@Override public void windowClosing(WindowEvent e) {
 					System.exit(0);
 				}
-
 			});
 
 			Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
@@ -88,8 +83,7 @@ class Login extends JFrame implements Flag {
 			return true;
 		}
 
-		@Override
-		public void run() {
+		@Override public void run() {
 			IsSending = 1;
 			try {
 				s.getMsgToServer().writeUTF(username);
@@ -100,7 +94,6 @@ class Login extends JFrame implements Flag {
 					if (check == Flag.SUCCESS) {// 登陆成功
 						if (loginClientWindow()) {
 							lg.setVisible(false);
-							// JOptionPane.showMessageDialog(lg, "没问题");
 						} else {
 							JOptionPane.showMessageDialog(lg, "登录失败");
 						}
@@ -132,10 +125,12 @@ class Login extends JFrame implements Flag {
 				new File(user.getAbsolutePath() + "/config.txt").createNewFile();
 				new File(user.getAbsolutePath() + "/friendList.txt").createNewFile();
 				new File(user.getAbsolutePath() + "/groupList.txt").createNewFile();
+				new File(user.getAbsolutePath() + "/update.txt").createNewFile();
 				new File(user.getAbsolutePath() + "/groupMsg").mkdir();
 				new File(user.getAbsolutePath() + "/friendMsg").mkdir();
 				new File(user.getAbsolutePath() + "/file").mkdir();
 				new File(user.getAbsolutePath() + "/image").mkdir();
+
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(this, "创建失败！");
 				e.printStackTrace();
@@ -162,8 +157,7 @@ class Login extends JFrame implements Flag {
 		textPanel.setSize(100, 50);
 
 		loginButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			@Override public void actionPerformed(ActionEvent e) {
 
 				if (IsSending == 1) {
 					return;
@@ -184,8 +178,7 @@ class Login extends JFrame implements Flag {
 		});
 
 		SigninButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			@Override public void actionPerformed(ActionEvent e) {
 				if (IsSending == 1) {
 					return;
 				}
@@ -205,8 +198,7 @@ class Login extends JFrame implements Flag {
 		});
 
 		usernameTextArea.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
+			@Override public void keyPressed(KeyEvent e) {
 				super.keyPressed(e);
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					if (IsSending == 1) {
@@ -231,8 +223,7 @@ class Login extends JFrame implements Flag {
 		});
 
 		passwordField.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
+			@Override public void keyPressed(KeyEvent e) {
 				super.keyPressed(e);
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					if (IsSending == 1) {
@@ -290,6 +281,7 @@ class ServerConnection {
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
 	private DataOutputStream FileToServer;
+	private FileInputStream fis;
 	private final File parentFile = new File(System.getProperty("user.dir") + "/src/client/users");
 	// 怎么获取当前代码文件的路径？
 
@@ -354,5 +346,36 @@ class ServerConnection {
 
 	File getParentFile() {
 		return this.parentFile;
+	}
+
+	Boolean uploadFile(String filePath) {
+		try {
+			fis = new FileInputStream(filePath);
+			fis.transferTo(FileToServer);
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	void receiveFile(String position) {
+		DataInputStream fileFromServer = getFileFromServer();
+		try {
+			FileOutputStream fos = new FileOutputStream(position);
+			int fileSize = 0;
+			byte[] buffer = new byte[1024 * 1024];
+			int size;
+			while ((size = fileFromServer.read(buffer)) != -1) {
+				fos.write(buffer, 0, size);
+				fileSize += size;
+				System.out.println("当前大小：" + fileSize);
+			}
+			fos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("缓存失败");
+		}
+
 	}
 }

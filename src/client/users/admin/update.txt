@@ -1,0 +1,2 @@
+friendList.txt|2
+groupList.txt|2

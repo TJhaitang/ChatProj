@@ -1,21 +1,17 @@
 package client;
 
-// import server.Flag;
-
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
 
 // 私聊 创建好友聊天界面，将本地聊天数据读取到这里，按照时间顺序制作窗口
 abstract class ChatWindow extends JFrame implements Flag {
@@ -139,8 +135,9 @@ abstract class ChatWindow extends JFrame implements Flag {
 				StyleConstants.setForeground(attr, Color.black);
 				MsgLabel.setParagraphAttributes(attr, false);
 				document.insertString(document.getLength(), name + " " + ss[0] + "\n", null);
-				if (true)
+				if (true) {
 					;
+				}
 				StyleConstants.setForeground(attr, Color.gray);
 				MsgLabel.setParagraphAttributes(attr, false);
 				String msgStr = ss[3].replaceAll("</or>", "\\|");
@@ -299,7 +296,8 @@ class FriendWindow extends ChatWindow {
 	}
 
 	@Override
-	void display() {// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
+	void display() {
+		// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
 		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		BufferedReader br = null;
 		try {
