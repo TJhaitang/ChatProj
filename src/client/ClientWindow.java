@@ -82,7 +82,7 @@ class ClientWindow extends JFrame implements Flag {
 				// 接受是否更新的信号
 				int a = s.getFileFromServer().readInt();
 				switch (a) {
-				//更新
+				// 更新
 				case Flag.LOCALUPDATE -> {
 					String cachePath = myPath + "/cache/" + file;
 					s.receiveFile(cachePath);
@@ -96,7 +96,6 @@ class ClientWindow extends JFrame implements Flag {
 			}
 			// 结束后,发送end
 			s.getFileToServer().writeUTF("end");
-
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -266,16 +265,28 @@ class ClientWindow extends JFrame implements Flag {
 						{
 							message = s.getMsgFromServer().readUTF();
 							String[] split = message.split("\\|");
-							// 若为已打开窗口则写入窗口中
-							if (chatWindows.containsKey(split[1])) {
-								chatWindows.get(split[1]).AddMessage(message);
+							if (split[5].toCharArray()[0] != 'G') {// 若为已打开窗口则写入窗口中
+								if (chatWindows.containsKey(split[1])) {
+									chatWindows.get(split[1]).AddMessage(message);
+								}
+								// 写入本地文件
+								File chatRecord = new File(s.getParentFile(),
+										s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
+								PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+								pw.println(message);
+								pw.close();
+							} else {
+								if (chatWindows.containsKey(split[5])) {
+									chatWindows.get(split[5]).AddMessage(message);
+								}
+								// 写入本地文件
+								File chatRecord = new File(s.getParentFile(),
+										s.getSelfName() + "/groupMsg/" + split[5] + ".txt");
+								PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+								pw.println(message);
+								pw.close();
 							}
-							// 写入本地文件
-							File chatRecord = new File(s.getParentFile(),
-									s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
-							PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-							pw.println(message);
-							pw.close();
+
 							// 写入用户主窗口
 						}
 						// 收到请求加好友的信息
@@ -336,7 +347,17 @@ class ClientWindow extends JFrame implements Flag {
 					s.getMsgToServer().writeUTF(mp.TargetName);
 					s.getMsgToServer().writeUTF(mp.MsgString);
 					// 如果这是发信息，那么就写文件
-
+					File chatRecord = null;
+					if (mp.TargetName.toCharArray()[0] != 'G') {
+						chatRecord = new File(s.getParentFile(),
+								s.getSelfName() + "/friendMsg/" + mp.TargetName + ".txt");
+					} else {
+						chatRecord = new File(s.getParentFile(),
+								s.getSelfName() + "/groupMsg/" + mp.TargetName + ".txt");
+					}
+					PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+					pw.println(mp.MsgString);
+					pw.close();
 				} catch (IOException e) {
 					// 写文件
 					// AddMsgToFile(s.getSelfName(), mp);

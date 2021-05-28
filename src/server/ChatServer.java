@@ -1,7 +1,5 @@
 package server;
 
-import sun.nio.ch.IOStatus;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -185,12 +183,12 @@ public class ChatServer {
 					e.printStackTrace();
 				}
 			}
-			BufferedWriter bw;
+			PrintWriter pw;
 			try {
-				bw = new BufferedWriter(new FileWriter(file));
-				bw.write("" + mp.flag + "\n");
-				bw.write(mp.MsgString + "\n");
-			} catch (IOException e) {
+				pw = new PrintWriter(new FileOutputStream(file, true));
+				pw.println("" + mp.flag + "\n" + mp.MsgString);
+				pw.close();
+			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
@@ -250,12 +248,14 @@ public class ChatServer {
 				if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友-按理说不会有问题，但万一呢
 					SendMsgToUser(TargetName, Msg);
 				} else {// 这里实现发群的逻辑
-					File UserList = new File(System.getProperty("user.dir") + "/groups/" + TargetName + ".txt");
+					File UserList = new File(
+							System.getProperty("user.dir") + "/src/server/groups/" + TargetName + ".txt");
 					try {
 						BufferedReader br = new BufferedReader(new FileReader(UserList));
 						String name;
 						while ((name = br.readLine()) != null) {
-							SendMsgToUser(name, Msg);
+							if (!name.equals(t.getUsername()))
+								SendMsgToUser(name, Msg);
 						}
 						br.close();
 					} catch (FileNotFoundException e) {
@@ -279,7 +279,7 @@ public class ChatServer {
 
 			private boolean isFriend(String tar)// 判断这个目标是好友or群组
 			{
-				return true;
+				return tar.toCharArray()[0] != 'G';
 			}
 
 		}
@@ -341,8 +341,10 @@ public class ChatServer {
 						str = br.readLine();
 						MsgQueue.add(new MsgPair(sign, str));
 					}
-					msgQ.delete();// 清空待发送消息
-					msgQ.createNewFile();
+					FileWriter fileWriter = new FileWriter(msgQ);
+					fileWriter.write("");
+					fileWriter.flush();
+					fileWriter.close();
 				} catch (IOException e) {
 					System.out.println(t.getUsername() + "display——done!");
 				}

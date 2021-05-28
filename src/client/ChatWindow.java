@@ -77,7 +77,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 				if (text == null || text.equals("")) {
 					return;
 				}
-				Sender sender = new Sender(Text.getText());
+				Sender sender = new Sender(Text.getText(), TargetId);
 				Text.setText("");
 				new Thread(sender).start();
 			}
@@ -205,14 +205,14 @@ abstract class ChatWindow extends JFrame implements Flag {
 	private class Sender implements Runnable {
 		String str;
 
-		Sender(String str1) {
+		Sender(String str1, String Tar) {
 			str = str1.replaceAll("\\|", "</or>");//
+			str = str.replaceAll("\n", "<br>");
+			str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + str + "|TEXT|" + Tar;
 		}
 
 		@Override
 		public void run() {
-			str = str.replaceAll("\n", "<br>");
-			str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + str + "|TEXT";
 			AddMessage(str);
 			sendMsg(str);
 		}
