@@ -99,7 +99,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 				Toolkit.getDefaultToolkit().getImage(System.getProperty("user.dir") + "/src/client/system/icon.png"));
 		this.add(buttonPanel_text);
 
-		this.addComponentListener(new ComponentAdapter() {
+		this.addComponentListener(new ComponentAdapter() {// 动态调整窗口大小
 			@Override
 			public void componentResized(ComponentEvent e) {
 				int width = getContentPane().getWidth();
@@ -186,7 +186,9 @@ abstract class ChatWindow extends JFrame implements Flag {
 
 	abstract void display();// 从历史记录中读取
 
-	abstract void sendMsg(String s);// 发信，与服务器做交互
+	protected void sendMsg(String s) {// 发信，与服务器做交互
+		cw.hand.PutMsg(new MsgPack(Flag.SENDTEXT, TargetId, s));
+	}
 
 	// 不能删，不然就关闭全部窗口了
 	protected void processWindowEvent(WindowEvent e) {
@@ -253,28 +255,6 @@ class GroupWindow extends ChatWindow {
 			e.printStackTrace();
 		}
 	}
-
-	@Override
-	void sendMsg(String str) {
-		try {
-			s.getMsgToServer().writeInt(Flag.SENDTEXT);
-			s.getMsgToServer().writeUTF(TargetId);
-			s.getMsgToServer().writeUTF(str);
-			int a = Flag.SUCCESS;
-			// int a = s.getMsgFromServer().readInt();
-			if (a != Flag.SUCCESS) {
-				JOptionPane.showMessageDialog(MsgList, "发送失败");
-			} else {
-				File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/groupMsg/" + TargetId + ".txt");
-				PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-				pw.println(str);
-				pw.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 }
 
 class FriendWindow extends ChatWindow {
@@ -316,27 +296,6 @@ class FriendWindow extends ChatWindow {
 				AddMessage(str);// 这里好像有点问题
 			}
 			br.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	void sendMsg(String str) {
-		try {
-			s.getMsgToServer().writeInt(Flag.SENDTEXT);
-			s.getMsgToServer().writeUTF(TargetId);
-			s.getMsgToServer().writeUTF(str);
-			int a = Flag.SUCCESS;
-			// int a = s.getMsgFromServer().readInt();
-			if (a != Flag.SUCCESS) {
-				JOptionPane.showMessageDialog(MsgList, "发送失败");
-			} else {
-				File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + TargetId + ".txt");
-				PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-				pw.println(str);
-				pw.close();
-			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

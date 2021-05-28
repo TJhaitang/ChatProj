@@ -70,7 +70,8 @@ class Login extends JFrame implements Flag {
 			s.setSelfName(username);
 			ClientWindow clientWindow = new ClientWindow(s);
 			clientWindow.addWindowListener(new WindowAdapter() {
-				@Override public void windowClosing(WindowEvent e) {
+				@Override
+				public void windowClosing(WindowEvent e) {
 					System.exit(0);
 				}
 			});
@@ -83,7 +84,8 @@ class Login extends JFrame implements Flag {
 			return true;
 		}
 
-		@Override public void run() {
+		@Override
+		public void run() {
 			IsSending = 1;
 			try {
 				s.getMsgToServer().writeUTF(username);
@@ -157,7 +159,8 @@ class Login extends JFrame implements Flag {
 		textPanel.setSize(100, 50);
 
 		loginButton.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
+			@Override
+			public void actionPerformed(ActionEvent e) {
 
 				if (IsSending == 1) {
 					return;
@@ -178,7 +181,8 @@ class Login extends JFrame implements Flag {
 		});
 
 		SigninButton.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
+			@Override
+			public void actionPerformed(ActionEvent e) {
 				if (IsSending == 1) {
 					return;
 				}
@@ -198,7 +202,8 @@ class Login extends JFrame implements Flag {
 		});
 
 		usernameTextArea.addKeyListener(new KeyAdapter() {
-			@Override public void keyPressed(KeyEvent e) {
+			@Override
+			public void keyPressed(KeyEvent e) {
 				super.keyPressed(e);
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					if (IsSending == 1) {
@@ -223,7 +228,8 @@ class Login extends JFrame implements Flag {
 		});
 
 		passwordField.addKeyListener(new KeyAdapter() {
-			@Override public void keyPressed(KeyEvent e) {
+			@Override
+			public void keyPressed(KeyEvent e) {
 				super.keyPressed(e);
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					if (IsSending == 1) {

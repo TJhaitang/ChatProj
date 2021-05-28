@@ -21,6 +21,7 @@ class ClientWindow extends JFrame implements Flag {
 	private final ServerConnection sc;
 	ClientWindow cw = this;
 	private final String myPath;
+	public HandleASession hand;
 
 	ClientWindow(ServerConnection s) {
 		this.sc = s;
@@ -30,7 +31,7 @@ class ClientWindow extends JFrame implements Flag {
 			JOptionPane.showMessageDialog(cw, "服务器和客户端同步失败");
 		}
 		// 接受服务器消息
-		new HandleASession(sc);
+		hand = new HandleASession(sc);
 		// 创建选项卡
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
 		tabbedPane.setPreferredSize(new Dimension(300, 300));
@@ -46,12 +47,14 @@ class ClientWindow extends JFrame implements Flag {
 		tabbedPane.setEnabledAt(1, true);
 		tabbedPane.setSelectedIndex(0);
 		tabbedPane.addMouseListener(new MouseAdapter() {
-			@Override public void mouseEntered(MouseEvent e) {
+			@Override
+			public void mouseEntered(MouseEvent e) {
 				super.mouseEntered(e);
 				tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 			}
 
-			@Override public void mouseExited(MouseEvent e) {
+			@Override
+			public void mouseExited(MouseEvent e) {
 				super.mouseExited(e);
 				tabbedPane.setCursor(Cursor.getDefaultCursor());
 			}
@@ -124,8 +127,7 @@ class ClientWindow extends JFrame implements Flag {
 		TargetPane.setLayout(new GridLayout(20, 1));
 		BufferedReader br;
 		try {
-			br = new BufferedReader(new FileReader(
-					new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的，尽量不要重新写_改了个地方
+			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的，尽量不要重新写_改了个地方
 			String tmp;
 			while ((tmp = br.readLine()) != null) {
 				if (sign == FRIENDPANE) {
@@ -148,7 +150,7 @@ class ClientWindow extends JFrame implements Flag {
 		// System.out.println(friendWindows.size());
 	}
 
-	class chatPanel extends JPanel {// 这是选项卡类，在这里面实现对好友、群组、最近消息框的创建
+	private class chatPanel extends JPanel {// 这是选项卡类，在这里面实现对好友、群组、最近消息框的创建
 		chatPanel panel = this;
 		String TargetId = "";
 		String TargetName = "";
@@ -159,7 +161,8 @@ class ClientWindow extends JFrame implements Flag {
 			panel.setLayout(new GridLayout(1, 1));
 			panel.setBackground(Color.white);
 			this.addMouseListener(new MouseListener() {
-				@Override public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
+				@Override
+				public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
 					if (chatWindows.containsKey(TargetId)) {
 						chatWindows.get(TargetId).setVisible(true);
 					} else {
@@ -171,19 +174,23 @@ class ClientWindow extends JFrame implements Flag {
 					}
 				}
 
-				@Override public void mousePressed(MouseEvent e) {
+				@Override
+				public void mousePressed(MouseEvent e) {
 					panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				}
 
-				@Override public void mouseReleased(MouseEvent e) {
+				@Override
+				public void mouseReleased(MouseEvent e) {
 					panel.setCursor(Cursor.getDefaultCursor());
 				}
 
-				@Override public void mouseEntered(MouseEvent e) {
+				@Override
+				public void mouseEntered(MouseEvent e) {
 					panel.setBackground(Color.lightGray);
 				}
 
-				@Override public void mouseExited(MouseEvent e) {
+				@Override
+				public void mouseExited(MouseEvent e) {
 					panel.setBackground(Color.white);
 				}
 			});
@@ -200,13 +207,17 @@ class ClientWindow extends JFrame implements Flag {
 		}
 	}
 
-	class HandleASession {
+	public class HandleASession {
 		private File filePath;// 在这里实现信息交互
 		ServerConnection s;
 		Reciever reciever = new Reciever();
 		Sender sender = new Sender();
-		Queue<MsgPair> MsgQueue = new LinkedList<>();
+		Queue<MsgPack> MsgQueue = new LinkedList<>();
 		int go = 1;
+
+		public void PutMsg(MsgPack ss) {
+			MsgQueue.add(ss);
+		}
 
 		HandleASession(ServerConnection s) {
 			this.s = s;
@@ -215,38 +226,30 @@ class ClientWindow extends JFrame implements Flag {
 			filePath = new File(System.getProperty("user.dir") + "/src/client/users/" + s.getSelfName());
 		}
 
-		private class MsgPair {
-			int flag;
-			String MsgString;
-
-			MsgPair(int flag, String Msg) {
-				this.flag = flag;
-				this.MsgString = Msg;
-			}
-		}
-
-		private void AddMsgToFile(String username, MsgPair mp) {// 图片怎么办？，但应该差别不大-图片另说//目前仅考虑了TEXT
-			File file = new File(filePath.getParentFile(), username + "/MsgQ.txt");
-			if (!file.exists()) {
-				try {
-					file.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			BufferedWriter bw;
-			try {
-				bw = new BufferedWriter(new FileWriter(file));
-				bw.write("" + mp.flag + "\n");
-				bw.write(mp.MsgString + "\n");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		// private void AddMsgToFile(String username, MsgPair mp) {//
+		// 图片怎么办？，但应该差别不大-图片另说//目前仅考虑了TEXT
+		// File file = new File(filePath.getParentFile(), username + "/MsgQ.txt");
+		// if (!file.exists()) {
+		// try {
+		// file.createNewFile();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+		// }
+		// BufferedWriter bw;
+		// try {
+		// bw = new BufferedWriter(new FileWriter(file));
+		// bw.write("" + mp.flag + "\n");
+		// bw.write(mp.MsgString + "\n");
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+		// }
 
 		private class Reciever implements Runnable {
 
-			@Override public void run() {
+			@Override
+			public void run() {
 				String message;
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					int sign;
@@ -258,21 +261,21 @@ class ClientWindow extends JFrame implements Flag {
 							// message = s.getFileFromServer().readNBytes();
 						}
 						case SENDTEXT -> // 先实现这部分功能尝试一下运行
-								{
-									message = s.getMsgFromServer().readUTF();
-									String[] split = message.split("\\|");
-									// 若为已打开窗口则写入窗口中
-									if (chatWindows.containsKey(split[1])) {
-										chatWindows.get(split[1]).AddMessage(message);
-									}
-									// 写入本地文件
-									File chatRecord = new File(s.getParentFile(),
-											s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
-									PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-									pw.println(message);
-									pw.close();
-									// 写入用户主窗口
-								}
+						{
+							message = s.getMsgFromServer().readUTF();
+							String[] split = message.split("\\|");
+							// 若为已打开窗口则写入窗口中
+							if (chatWindows.containsKey(split[1])) {
+								chatWindows.get(split[1]).AddMessage(message);
+							}
+							// 写入本地文件
+							File chatRecord = new File(s.getParentFile(),
+									s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
+							PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+							pw.println(message);
+							pw.close();
+							// 写入用户主窗口
+						}
 						// 收到请求加好友的信息
 						case ADDFRIEND -> {
 
@@ -303,15 +306,8 @@ class ClientWindow extends JFrame implements Flag {
 
 		private class Sender implements Runnable {
 
-			public void stop() {
-				go = 0;
-			}
-
-			public void PutMsg(MsgPair ss) {
-				MsgQueue.add(ss);
-			}
-
-			@Override public void run() {
+			@Override
+			public void run() {
 				while (go == 1) {
 					try {
 						Thread.sleep(5);// 为啥能用了？
@@ -319,23 +315,47 @@ class ClientWindow extends JFrame implements Flag {
 						e1.printStackTrace();
 					}
 					if (!MsgQueue.isEmpty()) {
-						// 这个改成锁
-						// System.out.println("排好队！");
-						MsgPair mp = MsgQueue.poll();
-						try {
-							s.getMsgToServer().writeInt(mp.flag);
-							s.getMsgToServer().writeUTF(mp.MsgString);// 失败后写文件(吗？)
-						} catch (IOException e) {
-							// 写文件
-							AddMsgToFile(s.getSelfName(), mp);
-							e.printStackTrace();
-							System.out.println("Send to " + s.getSelfName() + " error!");
+						MsgPack mp = MsgQueue.poll();
+						switch (mp.flag) {
+						case Flag.SENDTEXT:
+							SendText(mp);
+							break;
+
+						default:
+							break;
 						}
 					}
 				}
 			}
 
+			private void SendText(MsgPack mp) {
+				try {
+					s.getMsgToServer().writeInt(mp.flag);
+					s.getMsgToServer().writeUTF(mp.TargetName);
+					s.getMsgToServer().writeUTF(mp.MsgString);
+					// 如果这是发信息，那么就写文件
+
+				} catch (IOException e) {
+					// 写文件
+					// AddMsgToFile(s.getSelfName(), mp);
+					e.printStackTrace();
+					System.out.println("Send to " + s.getSelfName() + " error!");
+				}
+			}
+
 		}
 
+	}
+}
+
+class MsgPack {
+	int flag;
+	String TargetName;
+	String MsgString;
+
+	MsgPack(int flag, String TarName, String Msg) {
+		this.flag = flag;
+		this.TargetName = TarName;
+		this.MsgString = Msg;
 	}
 }
