@@ -131,6 +131,7 @@ class Login extends JFrame implements Flag {
 				new File(user.getAbsolutePath() + "/groupMsg").mkdir();
 				new File(user.getAbsolutePath() + "/friendMsg").mkdir();
 				new File(user.getAbsolutePath() + "/file").mkdir();
+				new File(user.getAbsolutePath() + "/cache").mkdir();
 				new File(user.getAbsolutePath() + "/image").mkdir();
 
 			} catch (IOException e) {
@@ -286,8 +287,7 @@ class ServerConnection {
 	private DataInputStream MsgFromServer;
 	private DataOutputStream MsgToServer;
 	private DataInputStream FileFromServer;
-	private DataOutputStream FileToServer;
-	private FileInputStream fis;
+	private DataOutputStream fileToServer;
 	private final File parentFile = new File(System.getProperty("user.dir") + "/src/client/users");
 	// 怎么获取当前代码文件的路径？
 
@@ -302,7 +302,7 @@ class ServerConnection {
 			MsgFromServer = new DataInputStream(MsgSocket.getInputStream());
 			MsgToServer = new DataOutputStream(MsgSocket.getOutputStream());
 			FileFromServer = new DataInputStream(FileSocket.getInputStream());
-			FileToServer = new DataOutputStream(FileSocket.getOutputStream());
+			fileToServer = new DataOutputStream(FileSocket.getOutputStream());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -339,7 +339,7 @@ class ServerConnection {
 	}
 
 	DataOutputStream getFileToServer() {
-		return FileToServer;
+		return fileToServer;
 	}
 
 	void setSelfName(String s) {
@@ -354,34 +354,41 @@ class ServerConnection {
 		return this.parentFile;
 	}
 
-	Boolean uploadFile(String filePath) {
+	void uploadFile(String filePath) {
 		try {
-			fis = new FileInputStream(filePath);
-			fis.transferTo(FileToServer);
-			return true;
+			// 先发送文件大小
+			long length = new File(filePath).length();
+			fileToServer.writeLong(length);
+			// 发送文件
+			FileInputStream fis = new FileInputStream(filePath);
+			byte[] buffer = new byte[8192];
+			int read;
+			while ((read = fis.read(buffer, 0, 8192)) >= 0) {
+				fileToServer.write(buffer, 0, read);
+			}
+			fis.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-			return false;
 		}
 	}
 
-	void receiveFile(String position) {
+	void receiveFile(String filePath) {
 		DataInputStream fileFromServer = getFileFromServer();
 		try {
-			FileOutputStream fos = new FileOutputStream(position);
-			int fileSize = 0;
-			byte[] buffer = new byte[1024 * 1024];
-			int size;
-			while ((size = fileFromServer.read(buffer)) != -1) {
-				fos.write(buffer, 0, size);
-				fileSize += size;
-				System.out.println("当前大小：" + fileSize);
+			// 先得到长度
+			long length = fileFromServer.readLong();
+			FileOutputStream fos = new FileOutputStream(filePath);
+			byte[] buffer = new byte[8192];
+			int read, transferred = 0;
+			while (length > transferred) {
+				read = fileFromServer.read(buffer, 0, 8192);
+				fos.write(buffer, 0, read);
+				transferred += read;
 			}
 			fos.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("缓存失败");
 		}
-
 	}
 }

@@ -1,6 +1,8 @@
 package client;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * -*- coding: utf-8 -*-
@@ -46,5 +48,43 @@ public class MyUtil {
 
 		}
 
+	}
+
+	public static String generateTimeStamp() {
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
+		return df.format(new Date());// 0为未读
+	}
+
+	public static String readLastLine(File file, String charset) {
+		if (!file.exists() || file.isDirectory() || !file.canRead()) {
+			return null;
+		}
+		try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+			long len = raf.length();
+			if (len == 0L) {
+				return "";
+			} else {
+				long pos = len - 1;
+				while (pos > 0) {
+					pos--;
+					raf.seek(pos);
+					if (raf.readByte() == '\n') {
+						break;
+					}
+				}
+				if (pos == 0) {
+					raf.seek(0);
+				}
+				byte[] bytes = new byte[(int) (len - pos)];
+				raf.read(bytes);
+				if (charset == null) {
+					return new String(bytes);
+				} else {
+					return new String(bytes, charset);
+				}
+			}
+		} catch (IOException ignored) {
+		}
+		return null;
 	}
 }
