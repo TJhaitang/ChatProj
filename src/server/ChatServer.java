@@ -179,13 +179,12 @@ public class ChatServer {
 					try {
 						sign = t.getMsgFromClient().readInt();
 						switch (sign) {
-						case Flag.SENDFRIEND: {
-							SendMsg(Flag.SENDFRIEND);
+						case Flag.SENDTEXT: {
+							SendMsg();
 							break;
 						}
-						case Flag.SENDGROUP:/* 往下先等等 */
+						case Flag.SENDFILE:/* 往下先等等 */
 						{
-							SendMsg(Flag.SENDGROUP);
 							break;
 						}
 						default:
@@ -202,7 +201,7 @@ public class ChatServer {
 				}
 			}
 
-			private void SendMsg(int flag)// 发消息用不同函数实现可以么？是不是有点不优雅
+			private void SendMsg()// 发消息用不同函数实现可以么？是不是有点不优雅
 			{// 先直接发，后面写存文件待发送
 				String TargetName = null, Msg = null;
 				try {
@@ -213,15 +212,32 @@ public class ChatServer {
 				}
 				// String[] split = Msg.split("\\|");
 				if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友-按理说不会有问题，但万一呢
-					if (UserMap.containsKey(TargetName)) {
-						System.out.println("向" + TargetName + "发送信息");
-						HandleASession h2 = UserMap.get(TargetName);
-						h2.sender.PutMsg(new MsgPair(Flag.SENDTEXT, Msg));// str格式再想一下
-					} else {
-						AddMsgToFile(TargetName, new MsgPair(Flag.SENDTEXT, Msg));
-					}
+					SendMsgToUser(TargetName, Msg);
 				} else {// 这里实现发群的逻辑
+					File UserList = new File(System.getProperty("user.dir") + "/groups/" + TargetName + ".txt");
+					try {
+						BufferedReader br = new BufferedReader(new FileReader(UserList));
+						String name;
+						while ((name = br.readLine()) != null) {
+							SendMsgToUser(name, Msg);
+						}
+						br.close();
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 
+				}
+			}
+
+			private void SendMsgToUser(String UserName, String Msg) {
+				if (UserMap.containsKey(UserName)) {
+					System.out.println("向" + UserName + "发送信息");
+					HandleASession h2 = UserMap.get(UserName);
+					h2.sender.PutMsg(new MsgPair(Flag.SENDTEXT, Msg));// str格式再想一下
+				} else {
+					AddMsgToFile(UserName, new MsgPair(Flag.SENDTEXT, Msg));
 				}
 			}
 
@@ -289,6 +305,8 @@ public class ChatServer {
 						str = br.readLine();
 						MsgQueue.add(new MsgPair(sign, str));
 					}
+					msgQ.delete();// 清空待发送消息
+					msgQ.createNewFile();
 				} catch (IOException e) {
 					System.out.println(t.getUsername() + "display——done!");
 				}

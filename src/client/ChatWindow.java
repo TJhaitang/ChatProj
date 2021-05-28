@@ -8,9 +8,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -33,8 +31,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 	protected JPanel buttonPanel_text = new JPanel();
 
 	protected JPanel buttonPanel_side = new JPanel();
-	protected JButton imageButton = new JButton("图片");
-	protected JButton fileButton = new JButton("文件");
+	protected JButton imageButton = new JButton("图\n片");
+	protected JButton fileButton = new JButton("文\n件");
 
 	protected ServerConnection s;
 	protected String TargetId;
@@ -46,14 +44,16 @@ abstract class ChatWindow extends JFrame implements Flag {
 	ChatWindow() {
 		this.setLayout(null);
 		this.setSize(700, 500);
-		this.setResizable(false);// 懒得解决问题，就解决问题的起因
+		// this.setResizable(false);// 懒得解决问题，就解决问题的起因
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		this.setLocation((dim.width - this.getWidth()) / 2, (dim.height - this.getHeight()) / 2);
 		// 侧边栏部分
 		buttonPanel_side.setLayout(new GridLayout(2, 1));
 		imageButton.setSize(30, 20);
+		imageButton.setMargin(new Insets(0, 0, 0, 0));
 		buttonPanel_side.add(imageButton);
 		fileButton.setSize(30, 20);
+		fileButton.setMargin(new Insets(0, 0, 0, 0));
 		buttonPanel_side.add(fileButton);
 		buttonPanel_side.setBounds(0, 0, 30, 455);
 
@@ -103,11 +103,18 @@ abstract class ChatWindow extends JFrame implements Flag {
 				Toolkit.getDefaultToolkit().getImage(System.getProperty("user.dir") + "/src/client/system/icon.png"));
 		this.add(buttonPanel_text);
 
-		// this.addWindowListener(new WindowAdapter() {
-		// public void windowClosing(WindowEvent e) {
-		// System.exit(0);
-		// }
-		// });
+		this.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				int width = getContentPane().getWidth();
+				int height = getContentPane().getHeight();
+				buttonPanel_side.setBounds(0, 0, 30, height);
+				MsgList.setBounds(30, 0, width - 30, height - 100);
+				TextBox.setBounds(30, height - 100, width - 80, 100);
+				buttonPanel_text.setBounds(width - 50, height - 100, 50, 100);
+				super.componentResized(e);
+			}
+		});
 	}
 
 	ChatWindow(ServerConnection s, String tar, ClientWindow cw) {
@@ -253,7 +260,7 @@ class GroupWindow extends ChatWindow {
 	@Override
 	void sendMsg(String str) {
 		try {
-			s.getMsgToServer().writeInt(Flag.SENDGROUP);
+			s.getMsgToServer().writeInt(Flag.SENDTEXT);
 			s.getMsgToServer().writeUTF(TargetId);
 			s.getMsgToServer().writeUTF(str);
 			int a = Flag.SUCCESS;
@@ -319,7 +326,7 @@ class FriendWindow extends ChatWindow {
 	@Override
 	void sendMsg(String str) {
 		try {
-			s.getMsgToServer().writeInt(Flag.SENDFRIEND);
+			s.getMsgToServer().writeInt(Flag.SENDTEXT);
 			s.getMsgToServer().writeUTF(TargetId);
 			s.getMsgToServer().writeUTF(str);
 			int a = Flag.SUCCESS;
