@@ -1,11 +1,13 @@
 package client;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalIconFactory;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -31,11 +33,11 @@ class ClientWindow extends JFrame implements Flag {
 			JOptionPane.showMessageDialog(cw, "服务器和客户端同步失败");
 		}
 		// 接受服务器消息
-		hand = new HandleASession(sc);
+		new HandleASession(sc);
+		// 创建UI界面
 		// 创建选项卡
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
-		tabbedPane.setPreferredSize(new Dimension(300, 300));
-		tabbedPane.setBorder(null);
+		tabbedPane.setPreferredSize(new Dimension(400, 800));
 		tabbedPane.setBackground(Color.white);
 		tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		// 创建整个好友列表
@@ -88,6 +90,7 @@ class ClientWindow extends JFrame implements Flag {
 					s.receiveFile(cachePath);
 					Files.copy(new File(cachePath).toPath(), new File(myPath + "/" + file).toPath(),
 							StandardCopyOption.REPLACE_EXISTING);
+					new File(cachePath).delete();
 				}
 				case Flag.NOUPDATE -> {
 				}
@@ -111,7 +114,7 @@ class ClientWindow extends JFrame implements Flag {
 					"这里有你和所有好友聊天的信息", FRIENDPANE);
 		}
 		case GROUPPANE -> {
-			createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(), "groupList.txt", "群组列表", "这里有你和所有好友聊天的信息",
+			createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(), "groupList.txt", "群组列表", "这里有你和所有群聊天的信息",
 					GROUPPANE);
 		}
 		case PYQ -> {
@@ -124,25 +127,38 @@ class ClientWindow extends JFrame implements Flag {
 	}
 
 	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip, int sign) {
-		JPanel TargetPane = new JPanel();
-		TargetPane.setLayout(new GridLayout(20, 1));
+		JPanel targetPane = new JPanel();
+		targetPane.setLayout(new FlowLayout(FlowLayout.CENTER));
 		BufferedReader br;
+		int countFriend = 0, countGroup = 0;
 		try {
-			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的，尽量不要重新写_改了个地方
+			br = new BufferedReader(
+					new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的
 			String tmp;
 			while ((tmp = br.readLine()) != null) {
 				if (sign == FRIENDPANE) {
-					TargetPane.add(new chatPanel(tmp, tmp, sign));
+					countFriend++;
+					targetPane.add(new chatPanel(tmp, tmp, sign));
 				} else if (sign == GROUPPANE) {
+					countGroup++;
 					String name = br.readLine();
-					TargetPane.add(new chatPanel(name, tmp, sign));
+					targetPane.add(new chatPanel(name, tmp, sign));
 				}
 			}
 			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		JScrollPane scrollPane = new JScrollPane(TargetPane);// 这里滚不起来，应该是tabbedPane的大小问题
+		if (sign == FRIENDPANE) {
+			targetPane.setPreferredSize(new Dimension(265, 70 * countFriend));
+		} else if (sign == GROUPPANE) {
+			targetPane.setPreferredSize(new Dimension(265, 70 * countGroup));
+		}
+
+		JScrollPane scrollPane = new JScrollPane(targetPane, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		// 设置滚轮速度(默认的太慢了)
+		scrollPane.getVerticalScrollBar().setUnitIncrement(13);
 		tabbedPane.addTab(title, paneIcon, scrollPane, tip);
 	}
 
@@ -156,14 +172,17 @@ class ClientWindow extends JFrame implements Flag {
 		String TargetId = "";
 		String TargetName = "";
 		int sign;
-		JLabel filler;
+		JLabel nameArea;
+		JLabel pictureArea;
+		JLabel recentTextArea;
+		JLabel timeArea;
 
 		chatPanel() {
-			panel.setLayout(new GridLayout(1, 1));
+			panel.setPreferredSize(new Dimension(265, 70));
+			panel.setLayout(null);
 			panel.setBackground(Color.white);
 			this.addMouseListener(new MouseListener() {
-				@Override
-				public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
+				@Override public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
 					if (chatWindows.containsKey(TargetId)) {
 						chatWindows.get(TargetId).setVisible(true);
 					} else {
@@ -175,23 +194,19 @@ class ClientWindow extends JFrame implements Flag {
 					}
 				}
 
-				@Override
-				public void mousePressed(MouseEvent e) {
+				@Override public void mousePressed(MouseEvent e) {
 					panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				}
 
-				@Override
-				public void mouseReleased(MouseEvent e) {
+				@Override public void mouseReleased(MouseEvent e) {
 					panel.setCursor(Cursor.getDefaultCursor());
 				}
 
-				@Override
-				public void mouseEntered(MouseEvent e) {
+				@Override public void mouseEntered(MouseEvent e) {
 					panel.setBackground(Color.lightGray);
 				}
 
-				@Override
-				public void mouseExited(MouseEvent e) {
+				@Override public void mouseExited(MouseEvent e) {
 					panel.setBackground(Color.white);
 				}
 			});
@@ -202,9 +217,29 @@ class ClientWindow extends JFrame implements Flag {
 			this.TargetId = id;
 			this.TargetName = name;
 			this.sign = sign;
-			filler = new JLabel(name);
-			panel.add(filler);
-			filler.setHorizontalAlignment(JLabel.CENTER);
+
+			try {
+				// 好友名的控件
+				nameArea = new JLabel(name);
+				nameArea.setHorizontalAlignment(JLabel.LEFT);
+				// 好友头像的控件
+				pictureArea = new JLabel();
+				BufferedImage bi = ImageIO.read(new File(myPath + "/friendIcon/" + name + ".jpg"));
+				BufferedImage newBI = new BufferedImage(50, 50, BufferedImage.TYPE_INT_RGB);
+				newBI.getGraphics().drawImage(bi.getScaledInstance(50, 50, Image.SCALE_SMOOTH), 0, 0, null);
+				ImageIcon ic = new ImageIcon(newBI);
+				pictureArea.setIcon(ic);
+				// 好友最近一条消息的控件
+				// 最近一条消息时间的控件
+				// 添加控件
+				panel.add(nameArea);
+				panel.add(pictureArea);
+				// 设置位置
+				nameArea.setBounds(new Rectangle(70, 13, 195, 20));
+				pictureArea.setBounds(new Rectangle(10, 10, 50, 50));
+			} catch (IOException e) {
+				System.out.println("头像无法读取!");
+			}
 		}
 	}
 

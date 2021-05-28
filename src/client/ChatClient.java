@@ -79,8 +79,7 @@ class Login extends JFrame implements Flag {
 			Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 			clientWindow.setBounds(screen.width - 500, (screen.height - 800) / 2, 400, 800);
 			clientWindow.setVisible(true);
-			clientWindow.setLayout(null);
-			clientWindow.setResizable(true);
+			clientWindow.setResizable(false);
 			return true;
 		}
 
@@ -133,6 +132,7 @@ class Login extends JFrame implements Flag {
 				new File(user.getAbsolutePath() + "/file").mkdir();
 				new File(user.getAbsolutePath() + "/cache").mkdir();
 				new File(user.getAbsolutePath() + "/image").mkdir();
+				new File(user.getAbsolutePath() + "/friendIcon").mkdir();
 
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(this, "创建失败！");
