@@ -203,7 +203,7 @@ public class ChatServer {
 						int sign = t.getMsgFromClient().readInt();
 						String TargetName = t.getMsgFromClient().readUTF();
 						String Msg = t.getMsgFromClient().readUTF();
-						MsgPack mp=new MsgPack(sign, TargetName, Msg)
+						MsgPack mp = new MsgPack(sign, TargetName, Msg);
 						switch (sign) {
 						case Flag.SENDTEXT: {
 							SendMsg(mp);
@@ -231,19 +231,13 @@ public class ChatServer {
 				}
 			}
 
-			private void AddFriend() {
+			private void AddFriend(MsgPack mp) {
 
 			}
 
-			private void SendMsg()// 发消息用不同函数实现可以么？是不是有点不优雅
+			private void SendMsg(MsgPack mp)// 发消息用不同函数实现可以么？是不是有点不优雅
 			{// 先直接发，后面写存文件待发送
-				String TargetName = null, Msg = null;
-				try {
-					TargetName = t.getMsgFromClient().readUTF();
-					Msg = t.getMsgFromClient().readUTF();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				String TargetName = mp.TargetName, Msg = mp.MsgString;
 				// String[] split = Msg.split("\\|");
 				if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友-按理说不会有问题，但万一呢
 					SendMsgToUser(TargetName, Msg);
@@ -309,6 +303,7 @@ public class ChatServer {
 						MsgPack mp = MsgQueue.poll();
 						try {
 							t.getMsgToClient().writeInt(mp.flag);
+							t.getMsgToClient().writeUTF(mp.TargetName);
 							t.getMsgToClient().writeUTF(mp.MsgString);// 失败后写文件(吗？)
 						} catch (IOException e) {// 写文件
 							AddMsgToFile(t.getUsername(), mp);

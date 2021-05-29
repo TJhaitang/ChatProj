@@ -533,11 +533,13 @@ class ClientWindow extends JFrame implements Flag {
 
 			@Override
 			public void run() {
-				String message;
+				String message, tar;
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					int sign;
 					try {
 						sign = s.getMsgFromServer().readInt();
+						tar = s.getMsgFromServer().readUTF();
+						message = s.getMsgFromServer().readUTF();
 						switch (sign) {
 						case SENDFILE -> {
 
@@ -545,7 +547,6 @@ class ClientWindow extends JFrame implements Flag {
 						}
 						case SENDTEXT -> // 先实现这部分功能尝试一下运行
 						{
-							message = s.getMsgFromServer().readUTF();
 							String[] split = message.split("\\|");
 							if (split[5].toCharArray()[0] != 'G') {// 若为已打开窗口则写入窗口中
 								if (chatWindows.containsKey(split[1])) {
