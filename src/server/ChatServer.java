@@ -11,12 +11,12 @@ public class ChatServer {
 	HashMap<String, HandleASession> UserMap = new HashMap<>();
 
 	public static void main(String[] args) {
-		ChatServer cs = new ChatServer();
+		new ChatServer();
 	}
 
 	ChatServer() {
 		try {
-			ServerSocket serverSocket = new ServerSocket(12138);
+			ServerSocket serverSocket = new ServerSocket(8888);
 			while (true) {
 				Socket msg = serverSocket.accept();
 				Socket file = serverSocket.accept();
