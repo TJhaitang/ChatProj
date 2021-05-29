@@ -3,10 +3,9 @@ package client;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalIconFactory;
+
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
@@ -25,11 +24,14 @@ class ClientWindow extends JFrame implements Flag {
 	private final String myPath;
 	public HandleASession hand;
 
+	private JTabbedPane tabbedPane;
 	private TargetList FriendList;
 	private TargetList GroupList;
 	private TargetList MsgList;
+	private UserPanel userPanel;
 
 	ClientWindow(ServerConnection s) {
+		this.setLayout(null);
 		this.sc = s;
 		myPath = sc.getParentFile().getAbsolutePath() + "/" + sc.getSelfName();
 		// 同步消息
@@ -40,7 +42,7 @@ class ClientWindow extends JFrame implements Flag {
 		hand = new HandleASession(sc);
 		// 创建UI界面
 		// 创建选项卡
-		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
+		tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
 		tabbedPane.setPreferredSize(new Dimension(400, 800));
 		tabbedPane.setBackground(Color.white);
 		tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
@@ -69,8 +71,23 @@ class ClientWindow extends JFrame implements Flag {
 		// 最后把选项卡放入frame
 		setIconImage(
 				Toolkit.getDefaultToolkit().getImage(System.getProperty("user.dir") + "/src/client/system/icon.png"));
-		this.add(tabbedPane, BorderLayout.CENTER);
+		userPanel = new UserPanel();
+		userPanel.setPreferredSize(new Dimension(400, 800));
+		this.add(userPanel);
+		this.add(tabbedPane);
 
+		this.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				int width = getContentPane().getWidth();
+				int height = getContentPane().getHeight();
+				userPanel.setBounds(0, 0, width, 70);
+				userPanel.addButton.setBounds(width - 25, 70 - 25, 20, 20);
+				userPanel.textField.setBounds(width - 200, 70 - 25, 170, 20);
+				tabbedPane.setBounds(0, 70, width, height - 70);
+				super.componentResized(e);
+			}
+		});
 	}
 
 	private boolean checkUpdate(ServerConnection s) {
@@ -137,6 +154,45 @@ class ClientWindow extends JFrame implements Flag {
 		// 设置滚轮速度(默认的太慢了)
 		scrollPane.getVerticalScrollBar().setUnitIncrement(13);
 		tabbedPane.addTab(title, paneIcon, scrollPane, tip);
+		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
+
+			@Override
+			String getMsgString(MsgPack mp) {
+				return "测试";
+			}
+
+			@Override
+			void Send(String IsAccept) {
+				MsgList.remove(panel);
+			}
+
+		});
+		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
+
+			@Override
+			String getMsgString(MsgPack mp) {
+				return "测试";
+			}
+
+			@Override
+			void Send(String IsAccept) {
+				MsgList.remove(panel);
+			}
+
+		});
+		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
+
+			@Override
+			String getMsgString(MsgPack mp) {
+				return "测试";
+			}
+
+			@Override
+			void Send(String IsAccept) {
+				MsgList.remove(panel);
+			}
+
+		});
 	}
 
 	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip, int sign) {
@@ -176,6 +232,70 @@ class ClientWindow extends JFrame implements Flag {
 		// System.out.println(friendWindows.size());
 	}
 
+	private class UserPanel extends JPanel {
+		public JButton addButton = new JButton("十");
+		public JTextField textField = new JTextField();
+		private JLabel UserName;
+		private JLabel pictureArea;
+		private JPanel panel = this;
+
+		UserPanel() {
+			this.setLayout(null);
+			this.setSize(400, 70);
+			this.setBackground(Color.white);
+			UserName = new JLabel(sc.getSelfName(), JLabel.LEFT);
+			BufferedImage bi = null;
+			try {
+				bi = ImageIO.read(new File(myPath + "/image/" + sc.getSelfName() + ".jpg"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			BufferedImage newBI = new BufferedImage(50, 50, BufferedImage.TYPE_INT_RGB);
+			newBI.getGraphics().drawImage(bi.getScaledInstance(50, 50, Image.SCALE_SMOOTH), 0, 0, null);
+			ImageIcon ic = new ImageIcon(newBI);
+			pictureArea = new JLabel();
+			pictureArea.setIcon(ic);
+
+			pictureArea.setBounds(10, 10, 50, 50);
+			UserName.setBounds(70, 10, 200, 20);
+			this.add(pictureArea);
+			this.add(UserName);
+
+			textField.setColumns(10);
+			addButton.setMargin(new Insets(0, 0, 0, 0));
+			addButton.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					JPopupMenu popMenu = new JPopupMenu();
+					JMenuItem addFriend = new JMenuItem("加好友");
+					JMenuItem creatGroup = new JMenuItem("创建群聊");
+					popMenu.add(addFriend);
+					popMenu.add(creatGroup);
+
+					addFriend.addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							// 在这里实现加好友的逻辑-再说吧
+						}
+					});
+
+					creatGroup.addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							// 在这里实现建群的逻辑-再说吧
+						}
+					});
+
+					popMenu.show(cw, panel.getWidth() - 25, panel.getHeight() - 5);
+				}
+
+			});
+			this.add(textField);
+			this.add(addButton);
+		}
+	}
+
 	private class TargetList extends JPanel {// 这是列表类，里面有列表内容与相关方法
 		int count = 0;
 
@@ -189,10 +309,20 @@ class ClientWindow extends JFrame implements Flag {
 			this.setPreferredSize(new Dimension(265, 70 * count));
 			return super.add(comp);
 		}
+
+		@Override
+		public void remove(Component comp) {
+			count -= 1;
+			this.setPreferredSize(new Dimension(265, 70 * count));
+			super.remove(comp);
+			this.repaint();
+			this.revalidate();
+		}
 	}
 
-	private class MsgPanel extends JPanel {
-		private JPanel panel = this;
+	private abstract class MsgPanel extends JPanel {
+		protected JPanel panel = this;
+		protected MsgPack mp;
 		protected JLabel Msg;
 		protected JButton AcceptButton = new JButton("接受");
 		protected JButton RefuseButton = new JButton("拒绝");
@@ -202,10 +332,27 @@ class ClientWindow extends JFrame implements Flag {
 			this.setLayout(null);
 			this.setBackground(Color.white);
 
-			Msg.setBounds(0, 0, 265, 35);
+			AcceptButton.setBounds(65, 38, 60, 25);
+			RefuseButton.setBounds(140, 38, 60, 25);
 
-			AcceptButton.setBounds(65, 32, 60, 25);
-			RefuseButton.setBounds(140, 32, 60, 25);
+			AcceptButton.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Send("Accept");
+				}
+
+			});
+
+			RefuseButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Send("Refuse");
+				}
+			});
+
+			this.add(AcceptButton);
+			this.add(RefuseButton);
 
 			this.addMouseListener(new MouseListener() {
 
@@ -237,14 +384,20 @@ class ClientWindow extends JFrame implements Flag {
 					panel.setBackground(Color.white);
 				}
 			});
-
-			this.setVisible(true);
 		}
 
-		MsgPanel(String MsgString) {
+		MsgPanel(MsgPack mpk) {
 			this();
+			this.mp = mpk;
+			String MsgString = getMsgString(mp);
 			Msg = new JLabel(MsgString, JLabel.CENTER);
+			Msg.setBounds(0, 0, 265, 35);
+			this.add(Msg);
 		}
+
+		abstract String getMsgString(MsgPack mp);
+
+		abstract void Send(String IsAccept);
 	}
 
 	private class chatPanel extends JPanel {// 这是选项卡类，在这里面实现对好友、群组、最近消息框的创建
@@ -415,23 +568,46 @@ class ClientWindow extends JFrame implements Flag {
 							// 写入用户主窗口
 						}
 						// 收到请求加好友的信息
-						case ADDFRIEND -> {// A加B好友：A|B|AddFriend
+						case ADDFRIEND -> {// A加B好友：A|B
+							message = s.getMsgFromServer().readUTF();
+							MsgList.add(new MsgPanel(new MsgPack(ADDFRIEND, message.split("\\|")[0], message)) {
+
+								@Override
+								String getMsgString(MsgPack mp) {
+									String str = mp.TargetName + " 向你发来好友申请";
+									return str;
+								}
+
+								@Override
+								void Send(String IsAccept) {
+									hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
+											mp.MsgString + "|" + IsAccept));
+									MsgList.remove(panel);
+								}
+
+							});
 
 						}
 						// 收到同意加好友的信息
 						case ACCEPTFRIEND -> {// A加B好友：A|B|Accept/Refuse
+							message = s.getMsgFromServer().readUTF();
+							String[] split = message.split("\\|");
+							if (split[2].equals("Accept")) {
+
+							} else if (split[2].equals("Refuse")) {
+
+							}
+						}
+						case CREATEGROUP -> {// A建群:A|ID
 
 						}
-						case CREATEGROUP -> {
+						case DELETEFRIEND -> {// A删除自己:A
 
 						}
-						case DELETEFRIEND -> {
+						case DELETEGROUP -> {// A删群：ID
 
 						}
-						case DELETEGROUP -> {
-
-						}
-						case QUITGROUP -> {
+						case QUITGROUP -> {// A退出群：ID|A
 
 						}
 						}

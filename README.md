@@ -34,8 +34,15 @@
 ***
 ## 210529xjz
 > 增加
+1. 增加了消息列表、消息选项卡。推送消息时需重写消息选项卡中的Send与getMsgString方法
+2. 增加了用户信息展示框
+3. 增加了加好友与建群的方法接口
 > 改动
-1. 将好友列表、群组列表、消息列表改为了继承了JPanel类的TargetList，并重写了add方法
+1. 将好友列表、群组列表、消息列表改为了继承了JPanel类的TargetList
+2. 在TargetList中重写了add与remove方法，现在可以直接调用这两个方法以自动调整大小
+> 其他
+1. 用户名有禁止字符：| ; \n G(还没实装)
+2. 发送消息：MsgList.add(new MsgPane(){@override});
 
 ***
 ## 210528xjz

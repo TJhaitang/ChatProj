@@ -221,6 +221,10 @@ public class ChatServer {
 						{
 							break;
 						}
+						case Flag.ADDFRIEND: {
+
+							break;
+						}
 						default:
 							break;
 						}
