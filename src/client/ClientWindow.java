@@ -276,14 +276,18 @@ class ClientWindow extends JFrame implements Flag {
 					addFriend.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							// 在这里实现加好友的逻辑-再说吧
+							String str = textField.getText();
+							textField.setText("");
+							hand.PutMsg(new MsgPack(Flag.ADDFRIEND, str, sc.getSelfName() + "|" + str));
 						}
 					});
 
 					creatGroup.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							// 在这里实现建群的逻辑-再说吧
+							String str = textField.getText();
+							textField.setText("");
+							hand.PutMsg(new MsgPack(Flag.CREATEGROUP, str, sc.getSelfName() + "|" + str));
 						}
 					});
 
@@ -631,12 +635,23 @@ class ClientWindow extends JFrame implements Flag {
 					if (!MsgQueue.isEmpty()) {
 						MsgPack mp = MsgQueue.poll();
 						switch (mp.flag) {
-						case Flag.SENDTEXT:
+						case Flag.SENDTEXT: {
 							SendText(mp);
 							break;
-
-						default:
+						}
+						case Flag.SENDFILE: {
 							break;
+						}
+						default: {
+							try {
+								s.getMsgToServer().writeInt(mp.flag);
+								s.getMsgToServer().writeUTF(mp.TargetName);
+								s.getMsgToServer().writeUTF(mp.MsgString);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							break;
+						}
 						}
 					}
 				}

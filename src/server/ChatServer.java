@@ -162,7 +162,7 @@ public class ChatServer {
 		TargetConnection t;
 		Receiver receiver = new Receiver();
 		Sender sender = new Sender();
-		Queue<MsgPair> MsgQueue = new LinkedList<>();
+		Queue<MsgPack> MsgQueue = new LinkedList<>();
 		int go = 1;
 		File filePath;
 
@@ -174,7 +174,7 @@ public class ChatServer {
 
 		}
 
-		private void AddMsgToFile(String username, MsgPair mp) {// 图片怎么办？，但应该差别不大-图片另说//目前仅考虑了TEXT
+		private void AddMsgToFile(String username, MsgPack mp) {// 图片怎么办？，但应该差别不大-图片另说//目前仅考虑了TEXT
 			File file = new File(filePath.getParentFile(), username + "/MsgQ.txt");
 			if (!file.exists()) {
 				try {
@@ -186,20 +186,10 @@ public class ChatServer {
 			PrintWriter pw;
 			try {
 				pw = new PrintWriter(new FileOutputStream(file, true));
-				pw.println("" + mp.flag + "\n" + mp.MsgString);
+				pw.println("" + mp.flag + "\n" + mp.TargetName + "\n" + mp.MsgString);
 				pw.close();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
-			}
-		}
-
-		private class MsgPair {
-			int flag;
-			String MsgString;
-
-			MsgPair(int flag, String Msg) {
-				this.flag = flag;
-				this.MsgString = Msg;
 			}
 		}
 
@@ -209,12 +199,14 @@ public class ChatServer {
 			public void run() {
 				String path;
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
-					int sign;
 					try {
-						sign = t.getMsgFromClient().readInt();
+						int sign = t.getMsgFromClient().readInt();
+						String TargetName = t.getMsgFromClient().readUTF();
+						String Msg = t.getMsgFromClient().readUTF();
+						MsgPack mp=new MsgPack(sign, TargetName, Msg)
 						switch (sign) {
 						case Flag.SENDTEXT: {
-							SendMsg();
+							SendMsg(mp);
 							break;
 						}
 						case Flag.SENDFILE:/* 往下先等等 */
@@ -222,7 +214,7 @@ public class ChatServer {
 							break;
 						}
 						case Flag.ADDFRIEND: {
-
+							AddFriend(mp);
 							break;
 						}
 						default:
@@ -237,6 +229,10 @@ public class ChatServer {
 						return;
 					}
 				}
+			}
+
+			private void AddFriend() {
+
 			}
 
 			private void SendMsg()// 发消息用不同函数实现可以么？是不是有点不优雅
@@ -275,9 +271,9 @@ public class ChatServer {
 				if (UserMap.containsKey(UserName)) {
 					System.out.println("向" + UserName + "发送信息");
 					HandleASession h2 = UserMap.get(UserName);
-					h2.sender.PutMsg(new MsgPair(Flag.SENDTEXT, Msg));// str格式再想一下
+					h2.sender.PutMsg(new MsgPack(Flag.SENDTEXT, UserName, Msg));// str格式再想一下
 				} else {
-					AddMsgToFile(UserName, new MsgPair(Flag.SENDTEXT, Msg));
+					AddMsgToFile(UserName, new MsgPack(Flag.SENDTEXT, UserName, Msg));
 				}
 			}
 
@@ -294,7 +290,7 @@ public class ChatServer {
 				go = 0;
 			}
 
-			public void PutMsg(MsgPair ss) {
+			public void PutMsg(MsgPack ss) {
 				MsgQueue.add(ss);
 				// System.out.println("测试一下");
 			}
@@ -310,7 +306,7 @@ public class ChatServer {
 					}
 					if (!MsgQueue.isEmpty()) {// 这个改成锁
 						// System.out.println("排好队！");
-						MsgPair mp = MsgQueue.poll();
+						MsgPack mp = MsgQueue.poll();
 						try {
 							t.getMsgToClient().writeInt(mp.flag);
 							t.getMsgToClient().writeUTF(mp.MsgString);// 失败后写文件(吗？)
@@ -338,12 +334,13 @@ public class ChatServer {
 					}
 				}
 				int sign;
-				String str;
+				String str, tar;
 				try {
 					while ((str = br.readLine()) != null) {
 						sign = Integer.parseInt(str);
+						tar = br.readLine();
 						str = br.readLine();
-						MsgQueue.add(new MsgPair(sign, str));
+						MsgQueue.add(new MsgPack(sign, tar, str));
 					}
 					FileWriter fileWriter = new FileWriter(msgQ);
 					fileWriter.write("");
@@ -464,4 +461,16 @@ class TargetConnection {// 建立一个类用以存放与用户的连接
 		return this.MsgSocket;
 	}
 
+}
+
+class MsgPack {
+	int flag;
+	String TargetName;
+	String MsgString;
+
+	MsgPack(int flag, String TargetName, String Msg) {
+		this.flag = flag;
+		this.TargetName = TargetName;
+		this.MsgString = Msg;
+	}
 }
