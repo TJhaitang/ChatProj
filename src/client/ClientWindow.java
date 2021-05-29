@@ -132,8 +132,6 @@ class ClientWindow extends JFrame implements Flag {
 
 	private void createMsgPane(JTabbedPane tabbedPane, Icon paneIcon, String title, String tip, int sign) {
 		MsgList = new TargetList();
-
-		MsgList.setLayout(new FlowLayout(FlowLayout.CENTER));
 		JScrollPane scrollPane = new JScrollPane(MsgList, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		// 设置滚轮速度(默认的太慢了)
@@ -193,15 +191,71 @@ class ClientWindow extends JFrame implements Flag {
 		}
 	}
 
+	private class MsgPanel extends JPanel {
+		private JPanel panel = this;
+		protected JLabel Msg;
+		protected JButton AcceptButton = new JButton("接受");
+		protected JButton RefuseButton = new JButton("拒绝");
+
+		MsgPanel() {
+			this.setPreferredSize(new Dimension(265, 70));
+			this.setLayout(null);
+			this.setBackground(Color.white);
+
+			Msg.setBounds(0, 0, 265, 35);
+
+			AcceptButton.setBounds(65, 32, 60, 25);
+			RefuseButton.setBounds(140, 32, 60, 25);
+
+			this.addMouseListener(new MouseListener() {
+
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void mousePressed(MouseEvent e) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void mouseEntered(MouseEvent e) {
+					panel.setBackground(Color.lightGray);
+				}
+
+				@Override
+				public void mouseExited(MouseEvent e) {
+					panel.setBackground(Color.white);
+				}
+			});
+
+			this.setVisible(true);
+		}
+
+		MsgPanel(String MsgString) {
+			this();
+			Msg = new JLabel(MsgString, JLabel.CENTER);
+		}
+	}
+
 	private class chatPanel extends JPanel {// 这是选项卡类，在这里面实现对好友、群组、最近消息框的创建
-		chatPanel panel = this;
-		String TargetId = "";
-		String TargetName = "";
-		int sign;
-		JLabel nameArea;
-		JLabel pictureArea;
-		JLabel recentTextArea;
-		JLabel timeArea;
+		private chatPanel panel = this;
+		private String TargetId = "";
+		private String TargetName = "";
+		private int sign;
+		private JLabel nameArea;
+		private JLabel pictureArea;
+		private JLabel recentTextArea;
+		private JLabel timeArea;
 
 		chatPanel() {
 			panel.setPreferredSize(new Dimension(265, 70));
@@ -361,11 +415,11 @@ class ClientWindow extends JFrame implements Flag {
 							// 写入用户主窗口
 						}
 						// 收到请求加好友的信息
-						case ADDFRIEND -> {
+						case ADDFRIEND -> {// A加B好友：A|B|AddFriend
 
 						}
 						// 收到同意加好友的信息
-						case ACCEPTFRIEND -> {
+						case ACCEPTFRIEND -> {// A加B好友：A|B|Accept/Refuse
 
 						}
 						case CREATEGROUP -> {
