@@ -19,11 +19,15 @@ import java.util.Queue;
 // 按钮连接到聊天框、朋友圈界面
 class ClientWindow extends JFrame implements Flag {
 
-	HashMap<String, ChatWindow> chatWindows = new HashMap<>();// 这里改成了ChatWindow
+	private HashMap<String, ChatWindow> chatWindows = new HashMap<>();// 这里改成了ChatWindow
 	private final ServerConnection sc;
-	ClientWindow cw = this;
+	private ClientWindow cw = this;
 	private final String myPath;
 	public HandleASession hand;
+
+	private TargetList FriendList;
+	private TargetList GroupList;
+	private TargetList MsgList;
 
 	ClientWindow(ServerConnection s) {
 		this.sc = s;
@@ -33,7 +37,7 @@ class ClientWindow extends JFrame implements Flag {
 			JOptionPane.showMessageDialog(cw, "服务器和客户端同步失败");
 		}
 		// 接受服务器消息
-		new HandleASession(sc);
+		hand = new HandleASession(sc);
 		// 创建UI界面
 		// 创建选项卡
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
@@ -44,7 +48,7 @@ class ClientWindow extends JFrame implements Flag {
 		// createScrollPanel(tabbedPane, Flag.RECENTPANE);
 		createScrollPanel(tabbedPane, Flag.FRIENDPANE);
 		createScrollPanel(tabbedPane, Flag.GROUPPANE);
-		// createScrollPanel(tabbedPane, Flag.PYQ);
+		createScrollPanel(tabbedPane, Flag.MESSAGE);
 
 		tabbedPane.setEnabledAt(1, true);
 		tabbedPane.setSelectedIndex(0);
@@ -117,8 +121,8 @@ class ClientWindow extends JFrame implements Flag {
 			createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(), "groupList.txt", "群组列表", "这里有你和所有群聊天的信息",
 					GROUPPANE);
 		}
-		case PYQ -> {
-			createPane(tabbedPane, new MetalIconFactory.FolderIcon16(), "friendList.txt", "朋友圈", "这里有你和所有群组的信息", PYQ);
+		case MESSAGE -> {
+			createMsgPane(tabbedPane, new MetalIconFactory.FolderIcon16(), "消息通知", "这里有你的所有通知信息", MESSAGE);
 		}
 		case RECENTPANE -> {
 			createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(), "", "最近消息", "这里有你和所有最近聊天的信息", RECENTPANE);
@@ -126,21 +130,28 @@ class ClientWindow extends JFrame implements Flag {
 		}
 	}
 
+	private void createMsgPane(JTabbedPane tabbedPane, Icon paneIcon, String title, String tip, int sign) {
+		MsgList = new TargetList();
+
+		MsgList.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JScrollPane scrollPane = new JScrollPane(MsgList, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		// 设置滚轮速度(默认的太慢了)
+		scrollPane.getVerticalScrollBar().setUnitIncrement(13);
+		tabbedPane.addTab(title, paneIcon, scrollPane, tip);
+	}
+
 	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip, int sign) {
-		JPanel targetPane = new JPanel();
+		TargetList targetPane = new TargetList();
 		targetPane.setLayout(new FlowLayout(FlowLayout.CENTER));
 		BufferedReader br;
-		int countFriend = 0, countGroup = 0;
 		try {
-			br = new BufferedReader(
-					new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的
+			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的
 			String tmp;
 			while ((tmp = br.readLine()) != null) {
 				if (sign == FRIENDPANE) {
-					countFriend++;
 					targetPane.add(new chatPanel(tmp, tmp, sign));
 				} else if (sign == GROUPPANE) {
-					countGroup++;
 					String name = br.readLine();
 					targetPane.add(new chatPanel(name, tmp, sign));
 				}
@@ -150,9 +161,9 @@ class ClientWindow extends JFrame implements Flag {
 			e.printStackTrace();
 		}
 		if (sign == FRIENDPANE) {
-			targetPane.setPreferredSize(new Dimension(265, 70 * countFriend));
+			FriendList = targetPane;
 		} else if (sign == GROUPPANE) {
-			targetPane.setPreferredSize(new Dimension(265, 70 * countGroup));
+			GroupList = targetPane;
 		}
 
 		JScrollPane scrollPane = new JScrollPane(targetPane, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -165,6 +176,21 @@ class ClientWindow extends JFrame implements Flag {
 	public void deleteWindow(String ID) {
 		chatWindows.remove(ID);
 		// System.out.println(friendWindows.size());
+	}
+
+	private class TargetList extends JPanel {// 这是列表类，里面有列表内容与相关方法
+		int count = 0;
+
+		TargetList() {
+			this.setLayout(new FlowLayout(FlowLayout.CENTER));
+		}
+
+		@Override
+		public Component add(Component comp) {
+			count += 1;
+			this.setPreferredSize(new Dimension(265, 70 * count));
+			return super.add(comp);
+		}
 	}
 
 	private class chatPanel extends JPanel {// 这是选项卡类，在这里面实现对好友、群组、最近消息框的创建
@@ -182,7 +208,8 @@ class ClientWindow extends JFrame implements Flag {
 			panel.setLayout(null);
 			panel.setBackground(Color.white);
 			this.addMouseListener(new MouseListener() {
-				@Override public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
+				@Override
+				public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
 					if (chatWindows.containsKey(TargetId)) {
 						chatWindows.get(TargetId).setVisible(true);
 					} else {
@@ -194,19 +221,23 @@ class ClientWindow extends JFrame implements Flag {
 					}
 				}
 
-				@Override public void mousePressed(MouseEvent e) {
+				@Override
+				public void mousePressed(MouseEvent e) {
 					panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				}
 
-				@Override public void mouseReleased(MouseEvent e) {
+				@Override
+				public void mouseReleased(MouseEvent e) {
 					panel.setCursor(Cursor.getDefaultCursor());
 				}
 
-				@Override public void mouseEntered(MouseEvent e) {
+				@Override
+				public void mouseEntered(MouseEvent e) {
 					panel.setBackground(Color.lightGray);
 				}
 
-				@Override public void mouseExited(MouseEvent e) {
+				@Override
+				public void mouseExited(MouseEvent e) {
 					panel.setBackground(Color.white);
 				}
 			});
@@ -217,14 +248,18 @@ class ClientWindow extends JFrame implements Flag {
 			this.TargetId = id;
 			this.TargetName = name;
 			this.sign = sign;
-
 			try {
 				// 好友名的控件
 				nameArea = new JLabel(name);
 				nameArea.setHorizontalAlignment(JLabel.LEFT);
 				// 好友头像的控件
 				pictureArea = new JLabel();
-				BufferedImage bi = ImageIO.read(new File(myPath + "/friendIcon/" + name + ".jpg"));
+				BufferedImage bi = null;
+				if (sign == Flag.FRIENDPANE) {
+					bi = ImageIO.read(new File(myPath + "/friendIcon/" + id + ".jpg"));
+				} else if (sign == Flag.GROUPPANE) {
+					bi = ImageIO.read(new File(myPath + "/groupIcon/" + id + ".jpg"));
+				}
 				BufferedImage newBI = new BufferedImage(50, 50, BufferedImage.TYPE_INT_RGB);
 				newBI.getGraphics().drawImage(bi.getScaledInstance(50, 50, Image.SCALE_SMOOTH), 0, 0, null);
 				ImageIcon ic = new ImageIcon(newBI);
@@ -238,6 +273,7 @@ class ClientWindow extends JFrame implements Flag {
 				nameArea.setBounds(new Rectangle(70, 13, 195, 20));
 				pictureArea.setBounds(new Rectangle(10, 10, 50, 50));
 			} catch (IOException e) {
+				e.printStackTrace();
 				System.out.println("头像无法读取!");
 			}
 		}
