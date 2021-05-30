@@ -608,12 +608,9 @@ class ClientWindow extends JFrame implements Flag {
 						message = s.getMsgFromServer().readUTF();
 						switch (sign) {
 						case SENDFILE -> {
-
-							// message = s.getFileFromServer().readNBytes();
 						}
 						case SENDTEXT -> // 先实现这部分功能尝试一下运行
 						{
-							message = s.getMsgFromServer().readUTF();
 							String[] split = message.split("\\|");
 							if (split[5].toCharArray()[0] != 'G') {// 若为已打开窗口则写入窗口中
 								if (chatWindows.containsKey(split[1])) {
