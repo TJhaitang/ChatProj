@@ -28,7 +28,7 @@ class ClientWindow extends JFrame implements Flag {
 	private JTabbedPane tabbedPane;
 	private TargetList FriendList;
 	private TargetList GroupList;
-	private TargetList MsgList;
+	private TargetList MsgList = new TargetList();
 	private UserPanel userPanel;
 
 	ClientWindow(ServerConnection s) {
@@ -150,7 +150,6 @@ class ClientWindow extends JFrame implements Flag {
 	}
 
 	private void createMsgPane(JTabbedPane tabbedPane, Icon paneIcon) {
-		MsgList = new TargetList();
 		JScrollPane scrollPane = new JScrollPane(MsgList, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		// 设置滚轮速度(默认的太慢了)
@@ -300,10 +299,10 @@ class ClientWindow extends JFrame implements Flag {
 						@Override
 						public void actionPerformed(ActionEvent e) {
 							String str = textField.getText();
-							if (!str.contains("\\|")) {
-								JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n好友1|好友2|......");
-								return;
-							}
+							// if (!str.contains("\\|")) {
+							// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n好友1|好友2|......");
+							// return;
+							// }
 							textField.setText("");
 							hand.PutMsg(new MsgPack(Flag.ADDFRIEND, str, sc.getSelfName() + "|" + str));
 						}
@@ -313,10 +312,10 @@ class ClientWindow extends JFrame implements Flag {
 						@Override
 						public void actionPerformed(ActionEvent e) {
 							String str = textField.getText();
-							if (!(str.contains(":") && str.contains("\\|"))) {
-								JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n群名:群成员1|群成员2|......");
-								return;
-							}
+							// if (!str.contains(":")) {
+							// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n群名:群成员1|群成员2|......");
+							// return;
+							// }
 							textField.setText("");
 							String groupName = str.split(":")[0];
 							str = str.split(":")[1];
@@ -747,7 +746,7 @@ class ClientWindow extends JFrame implements Flag {
 									@Override
 									void Send(String IsAccept) {
 										if (IsAccept.equals("Accept")) {// 这么写的话，如果拒绝加群就不发了
-											hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
+											hand.PutMsg(new MsgPack(ACCEPTGROUP, this.mp.TargetName,
 													mp.MsgString + "|" + IsAccept));// A|ID|NAME|ACCEPT
 											File file = new File(filePath, "/groupList.txt");
 											if (!file.exists()) {
