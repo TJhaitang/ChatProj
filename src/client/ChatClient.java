@@ -16,8 +16,8 @@ public class ChatClient {
 
 	ChatClient() {
 		try {
-			MsgSocket = new Socket("localhost", 12138);// 建立连接
-			FileSocket = new Socket("localhost", 12138);
+			MsgSocket = new Socket("localhost", 8888);// 建立连接
+			FileSocket = new Socket("localhost", 8888);
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
 			System.exit(0);

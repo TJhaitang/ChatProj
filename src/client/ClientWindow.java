@@ -19,7 +19,7 @@ import java.util.Queue;
 // 按钮连接到聊天框、朋友圈界面
 class ClientWindow extends JFrame implements Flag {
 
-	private HashMap<String, ChatWindow> chatWindows = new HashMap<>();// 这里改成了ChatWindow
+	private final HashMap<String, ChatWindow> chatWindows = new HashMap<>();// 这里改成了ChatWindow
 	private final ServerConnection sc;
 	private ClientWindow cw = this;
 	private final String myPath;
@@ -140,21 +140,22 @@ class ClientWindow extends JFrame implements Flag {
 					GROUPPANE);
 		}
 		case MESSAGE -> {
-			createMsgPane(tabbedPane, new MetalIconFactory.FolderIcon16(), "消息通知", "这里有你的所有通知信息", MESSAGE);
+			createMsgPane(tabbedPane, new MetalIconFactory.FolderIcon16());
 		}
 		case RECENTPANE -> {
-			createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(), "", "最近消息", "这里有你和所有最近聊天的信息", RECENTPANE);
+			createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(), "聊天信息", "最近消息", "这里有你和所有最近聊天的信息",
+					RECENTPANE);
 		}
 		}
 	}
 
-	private void createMsgPane(JTabbedPane tabbedPane, Icon paneIcon, String title, String tip, int sign) {
+	private void createMsgPane(JTabbedPane tabbedPane, Icon paneIcon) {
 		MsgList = new TargetList();
 		JScrollPane scrollPane = new JScrollPane(MsgList, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		// 设置滚轮速度(默认的太慢了)
 		scrollPane.getVerticalScrollBar().setUnitIncrement(13);
-		tabbedPane.addTab(title, paneIcon, scrollPane, tip);
+		tabbedPane.addTab("消息列表", paneIcon, scrollPane, "这里是你的消息通知列表");
 		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
 
 			@Override
@@ -499,10 +500,10 @@ class ClientWindow extends JFrame implements Flag {
 			this.TargetName = name;
 			this.sign = sign;
 			try {
-				// 好友名的控件
-				nameArea = new JLabel(name);
+				// 名字的控件
+				nameArea = new JLabel(TargetName);
 				nameArea.setHorizontalAlignment(JLabel.LEFT);
-				// 好友头像的控件
+				// 头像的控件
 				pictureArea = new JLabel();
 				BufferedImage bi = null;
 				File imageFile = null;
@@ -519,14 +520,35 @@ class ClientWindow extends JFrame implements Flag {
 				newBI.getGraphics().drawImage(bi.getScaledInstance(50, 50, Image.SCALE_SMOOTH), 0, 0, null);
 				ImageIcon ic = new ImageIcon(newBI);
 				pictureArea.setIcon(ic);
-				// 好友最近一条消息的控件
-				// 最近一条消息时间的控件
+				// 最近一条消息的控件
+				String lastLine;
+				if (sign == Flag.FRIENDPANE) {
+					lastLine = MyUtil.readLastLine(new File(myPath + "/friendMsg/" + TargetId + ".txt"), null);
+				} else {
+					// sign = GroupPane
+					lastLine = MyUtil.readLastLine(new File(myPath + "/groupMsg/" + TargetId + ".txt"), null);
+				}
+				if (lastLine == null || lastLine.equals("")) {
+					recentTextArea = new JLabel();
+					timeArea = new JLabel();
+				} else {
+					recentTextArea = new JLabel(lastLine.split("\\|")[1] + ":" + lastLine.split("\\|")[3]);
+					// 最近一条消息时间的控件
+					// 怎么修改时间格式？
+					timeArea = new JLabel(lastLine.split("\\|")[0]);
+				}
+				recentTextArea.setFont(new Font("宋体", Font.PLAIN, 10));
+				timeArea.setFont(new Font("宋体", Font.PLAIN, 10));
 				// 添加控件
 				panel.add(nameArea);
 				panel.add(pictureArea);
+				panel.add(recentTextArea);
+				panel.add(timeArea);
 				// 设置位置
-				nameArea.setBounds(new Rectangle(70, 13, 195, 20));
+				nameArea.setBounds(new Rectangle(70, 13, 85, 20));
 				pictureArea.setBounds(new Rectangle(10, 10, 50, 50));
+				recentTextArea.setBounds(new Rectangle(70, 35, 195, 20));
+				timeArea.setBounds(new Rectangle(160, 13, 105, 20));
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.out.println("头像无法读取!");
@@ -591,6 +613,7 @@ class ClientWindow extends JFrame implements Flag {
 						}
 						case SENDTEXT -> // 先实现这部分功能尝试一下运行
 						{
+							message = s.getMsgFromServer().readUTF();
 							String[] split = message.split("\\|");
 							if (split[5].toCharArray()[0] != 'G') {// 若为已打开窗口则写入窗口中
 								if (chatWindows.containsKey(split[1])) {
@@ -692,7 +715,7 @@ class ClientWindow extends JFrame implements Flag {
 
 									@Override
 									String getMsgString(MsgPack mp) {
-										String str = mp.TargetName + " 向你发来群聊邀请,群id为:" + message.split("\\|")[1];
+										String str = mp.TargetName + " 向你发来群聊邀请,群id为:" + mp.MsgString.split("\\|")[1];
 										File file = new File(filePath, "/groupList.txt");
 										if (!file.exists()) {
 											try {
