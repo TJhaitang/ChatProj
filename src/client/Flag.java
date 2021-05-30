@@ -16,6 +16,7 @@ public interface Flag {
 	final int ADDFRIEND = 5;
 	final int ACCEPTFRIEND = 15;
 	final int CREATEGROUP = 6;
+	final int ACCEPTGROUP = 31;
 	final int DELETEFRIEND = 7;
 	final int DELETEGROUP = 8;
 	final int QUITGROUP = 9;
@@ -24,7 +25,7 @@ public interface Flag {
 	final int GROUPPANE = 11;
 	final int PYQ = 12;
 	final int RECENTPANE = 13;
-	final int MESSAGE = 20;
+	final int MESSAGE = 30;
 
 	final int CHECKUPDATE = 17;
 	final int LOCALUPDATE = 18;

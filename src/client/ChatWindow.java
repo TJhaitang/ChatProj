@@ -234,16 +234,18 @@ class GroupWindow extends ChatWindow {
 	@Override
 	void display() {
 		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
-		BufferedReader br = null;
-		try {
-			br = new BufferedReader(new FileReader(chatRecord));
-		} catch (FileNotFoundException e) {
-			JOptionPane.showMessageDialog(this, "消息记录不存在！");
+		if (!chatRecord.exists()) {
 			try {
 				chatRecord.createNewFile();
 			} catch (IOException ioException) {
 				ioException.printStackTrace();
 			}
+		}
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(chatRecord));
+		} catch (FileNotFoundException e) {
+			JOptionPane.showMessageDialog(this, "消息记录读取失败！");
 		}
 		String str;
 		try {
@@ -279,16 +281,18 @@ class FriendWindow extends ChatWindow {
 	void display() {
 		// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
 		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+		if (!chatRecord.exists()) {
+			try {
+				chatRecord.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(chatRecord));
 		} catch (FileNotFoundException e) {
-			JOptionPane.showMessageDialog(this, "消息记录不存在！");
-			try {
-				chatRecord.createNewFile();
-			} catch (IOException ioException) {
-				ioException.printStackTrace();
-			}
+			JOptionPane.showMessageDialog(this, "消息记录读取失败！");
 		}
 		String str;
 		try {

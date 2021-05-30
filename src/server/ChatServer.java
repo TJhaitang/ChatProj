@@ -217,6 +217,18 @@ public class ChatServer {
 							AddFriend(mp);
 							break;
 						}
+						case Flag.ACCEPTFRIEND: {
+							AcceptFriend(mp);
+							break;
+						}
+						case Flag.CREATEGROUP: {
+							CreateGroup(mp);
+							break;
+						}
+						case Flag.ACCEPTGROUP: {
+							AcceptGroup(mp);
+							break;
+						}
 						default:
 							break;
 						}
@@ -231,8 +243,89 @@ public class ChatServer {
 				}
 			}
 
-			private void AddFriend(MsgPack mp) {
+			private void AcceptGroup(MsgPack mp) {
+				File file = new File(filePath.getParentFile(),
+						System.getProperty("user.dir") + "/src/server/groups/" + mp.MsgString.split("\\|")[1] + ".txt");
 
+				try {
+					file.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				PrintWriter pw;
+				try {
+					pw = new PrintWriter(new FileOutputStream(file, true));
+					pw.println(t.getUsername());
+					pw.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
+
+			private void CreateGroup(MsgPack mp) {
+				String[] users = mp.TargetName.split("\\|");
+				String groupName = mp.MsgString.split("\\|")[1];
+				String groupId;
+				File groupMem;
+				while (true) {
+					groupId = "G" + (int) (Math.random() * 1000000);
+					groupMem = new File(filePath.getParentFile(),
+							System.getProperty("user.dir") + "/src/server/groups/" + groupId + ".txt");
+					if (!groupMem.exists()) {
+						try {
+							groupMem.createNewFile();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						break;
+					}
+				}
+				PrintWriter pw;
+				try {
+					pw = new PrintWriter(new FileOutputStream(groupMem, true));
+					pw.println(t.getUsername());
+					pw.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+				SendMsgToUser(new MsgPack(Flag.CREATEGROUP, t.getUsername(),
+						t.getUsername() + "|" + groupId + "|" + groupName));
+				for (int i = 0; i < users.length; i++) {
+					if (!users[i].equals(t.getUsername()))
+						SendMsgToUser(new MsgPack(Flag.CREATEGROUP, users[i],
+								t.getUsername() + "|" + groupId + "|" + groupName));
+				}
+			}
+
+			private void AcceptFriend(MsgPack mp) {
+				SendMsgToUser(new MsgPack(Flag.ACCEPTFRIEND, mp.TargetName, mp.MsgString));
+				if (mp.MsgString.split("\\|")[2].equals("Refuse")) {
+					return;
+				}
+				File file = new File(filePath, "/friendList.txt");
+				if (!file.exists()) {
+					try {
+						file.createNewFile();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				PrintWriter pw;
+				try {
+					pw = new PrintWriter(new FileOutputStream(file, true));
+					pw.println(mp.MsgString.split("\\|")[0]);
+					pw.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
+
+			private void AddFriend(MsgPack mp) {// 这里没判断是否有这个好友
+				String[] users = mp.TargetName.split("\\|");
+				for (int i = 0; i < users.length; i++) {
+					if (!users[i].equals(t.getUsername()))
+						SendMsgToUser(new MsgPack(Flag.ADDFRIEND, users[i], t.getUsername() + "|" + users[i]));
+				}
 			}
 
 			private void SendMsg(MsgPack mp)// 发消息用不同函数实现可以么？是不是有点不优雅
@@ -240,7 +333,7 @@ public class ChatServer {
 				String TargetName = mp.TargetName, Msg = mp.MsgString;
 				// String[] split = Msg.split("\\|");
 				if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友-按理说不会有问题，但万一呢
-					SendMsgToUser(TargetName, Msg);
+					SendMsgToUser(new MsgPack(Flag.SENDTEXT, TargetName, Msg));
 				} else {// 这里实现发群的逻辑
 					File UserList = new File(
 							System.getProperty("user.dir") + "/src/server/groups/" + TargetName + ".txt");
@@ -249,7 +342,7 @@ public class ChatServer {
 						String name;
 						while ((name = br.readLine()) != null) {
 							if (!name.equals(t.getUsername()))
-								SendMsgToUser(name, Msg);
+								SendMsgToUser(new MsgPack(Flag.SENDTEXT, name, Msg));
 						}
 						br.close();
 					} catch (FileNotFoundException e) {
@@ -261,13 +354,13 @@ public class ChatServer {
 				}
 			}
 
-			private void SendMsgToUser(String UserName, String Msg) {
-				if (UserMap.containsKey(UserName)) {
-					System.out.println("向" + UserName + "发送信息");
-					HandleASession h2 = UserMap.get(UserName);
-					h2.sender.PutMsg(new MsgPack(Flag.SENDTEXT, UserName, Msg));// str格式再想一下
+			private void SendMsgToUser(MsgPack mp) {
+				if (UserMap.containsKey(mp.TargetName)) {
+					System.out.println("向" + mp.TargetName + "发送信息");
+					HandleASession h2 = UserMap.get(mp.TargetName);
+					h2.sender.PutMsg(new MsgPack(mp.flag, mp.TargetName, mp.MsgString));// str格式再想一下
 				} else {
-					AddMsgToFile(UserName, new MsgPack(Flag.SENDTEXT, UserName, Msg));
+					AddMsgToFile(mp.TargetName, new MsgPack(mp.flag, mp.TargetName, mp.MsgString));
 				}
 			}
 
@@ -305,6 +398,31 @@ public class ChatServer {
 							t.getMsgToClient().writeInt(mp.flag);
 							t.getMsgToClient().writeUTF(mp.TargetName);
 							t.getMsgToClient().writeUTF(mp.MsgString);// 失败后写文件(吗？)
+							switch (mp.flag) {
+							case Flag.ACCEPTFRIEND: {
+								if (mp.MsgString.split("\\|")[2].equals("Accept")) {
+									File file = new File(filePath, "/friendList.txt");
+									if (!file.exists()) {
+										try {
+											file.createNewFile();
+										} catch (IOException e) {
+											e.printStackTrace();
+										}
+									}
+									PrintWriter pw;
+									try {
+										pw = new PrintWriter(new FileOutputStream(file, true));
+										pw.println(mp.MsgString.split("\\|")[1]);
+										pw.close();
+									} catch (FileNotFoundException e) {
+										e.printStackTrace();
+									}
+								}
+								break;
+							}
+							default:
+								break;
+							}
 						} catch (IOException e) {// 写文件
 							AddMsgToFile(t.getUsername(), mp);
 							e.printStackTrace();

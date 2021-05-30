@@ -2,6 +2,7 @@ package client;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.GroupLayout.Group;
 import javax.swing.plaf.metal.MetalIconFactory;
 
 import java.awt.*;
@@ -232,6 +233,22 @@ class ClientWindow extends JFrame implements Flag {
 		// System.out.println(friendWindows.size());
 	}
 
+	public void addMessage(String s) {
+		MsgList.add(new MsgPanel(s) {
+
+			@Override
+			String getMsgString(MsgPack mp) {
+				return null;
+			}
+
+			@Override
+			void Send(String IsAccept) {
+				MsgList.remove(this);
+			}
+
+		});
+	}
+
 	private class UserPanel extends JPanel {
 		public JButton addButton = new JButton("十");
 		public JTextField textField = new JTextField();
@@ -245,8 +262,13 @@ class ClientWindow extends JFrame implements Flag {
 			this.setBackground(Color.white);
 			UserName = new JLabel(sc.getSelfName(), JLabel.LEFT);
 			BufferedImage bi = null;
+			File imageFile = new File(myPath + "/image/" + sc.getSelfName() + ".jpg");
+			if (!imageFile.exists()) {
+				imageFile = new File(sc.getParentFile().getParent() + "/system/IconDefault.jpg");
+			}
 			try {
-				bi = ImageIO.read(new File(myPath + "/image/" + sc.getSelfName() + ".jpg"));
+				bi = ImageIO.read(imageFile);
+
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -273,10 +295,14 @@ class ClientWindow extends JFrame implements Flag {
 					popMenu.add(addFriend);
 					popMenu.add(creatGroup);
 
-					addFriend.addActionListener(new ActionListener() {
+					addFriend.addActionListener(new ActionListener() {// 写一下输入检查
 						@Override
 						public void actionPerformed(ActionEvent e) {
 							String str = textField.getText();
+							if (!str.contains("\\|")) {
+								JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n好友1|好友2|......");
+								return;
+							}
 							textField.setText("");
 							hand.PutMsg(new MsgPack(Flag.ADDFRIEND, str, sc.getSelfName() + "|" + str));
 						}
@@ -286,8 +312,14 @@ class ClientWindow extends JFrame implements Flag {
 						@Override
 						public void actionPerformed(ActionEvent e) {
 							String str = textField.getText();
+							if (!(str.contains(":") && str.contains("\\|"))) {
+								JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n群名:群成员1|群成员2|......");
+								return;
+							}
 							textField.setText("");
-							hand.PutMsg(new MsgPack(Flag.CREATEGROUP, str, sc.getSelfName() + "|" + str));
+							String groupName = str.split(":")[0];
+							str = str.split(":")[1];
+							hand.PutMsg(new MsgPack(Flag.CREATEGROUP, str, sc.getSelfName() + "|" + groupName));
 						}
 					});
 
@@ -399,6 +431,13 @@ class ClientWindow extends JFrame implements Flag {
 			this.add(Msg);
 		}
 
+		MsgPanel(String str) {
+			this();
+			Msg = new JLabel(str, JLabel.CENTER);
+			Msg.setBounds(0, 0, 265, 35);
+			this.add(Msg);
+		}
+
 		abstract String getMsgString(MsgPack mp);
 
 		abstract void Send(String IsAccept);
@@ -466,11 +505,16 @@ class ClientWindow extends JFrame implements Flag {
 				// 好友头像的控件
 				pictureArea = new JLabel();
 				BufferedImage bi = null;
+				File imageFile = null;
 				if (sign == Flag.FRIENDPANE) {
-					bi = ImageIO.read(new File(myPath + "/friendIcon/" + id + ".jpg"));
+					imageFile = new File(myPath + "/friendIcon/" + id + ".jpg");
 				} else if (sign == Flag.GROUPPANE) {
-					bi = ImageIO.read(new File(myPath + "/groupIcon/" + id + ".jpg"));
+					imageFile = new File(myPath + "/groupIcon/" + id + ".jpg");
 				}
+				if (!imageFile.exists()) {
+					imageFile = new File(sc.getParentFile().getParent() + "/system/IconDefault.jpg");
+				}
+				bi = ImageIO.read(imageFile);
 				BufferedImage newBI = new BufferedImage(50, 50, BufferedImage.TYPE_INT_RGB);
 				newBI.getGraphics().drawImage(bi.getScaledInstance(50, 50, Image.SCALE_SMOOTH), 0, 0, null);
 				ImageIcon ic = new ImageIcon(newBI);
@@ -533,9 +577,9 @@ class ClientWindow extends JFrame implements Flag {
 
 			@Override
 			public void run() {
-				String message, tar;
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					int sign;
+					String message, tar;
 					try {
 						sign = s.getMsgFromServer().readInt();
 						tar = s.getMsgFromServer().readUTF();
@@ -574,7 +618,6 @@ class ClientWindow extends JFrame implements Flag {
 						}
 						// 收到请求加好友的信息
 						case ADDFRIEND -> {// A加B好友：A|B
-							message = s.getMsgFromServer().readUTF();
 							MsgList.add(new MsgPanel(new MsgPack(ADDFRIEND, message.split("\\|")[0], message)) {
 
 								@Override
@@ -587,6 +630,28 @@ class ClientWindow extends JFrame implements Flag {
 								void Send(String IsAccept) {
 									hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
 											mp.MsgString + "|" + IsAccept));
+									if (IsAccept.equals("Accept")) {
+										File file = new File(filePath, "/friendList.txt");
+										if (!file.exists()) {
+											try {
+												file.createNewFile();
+											} catch (IOException e) {
+												e.printStackTrace();
+											}
+										}
+										PrintWriter pw;
+										try {
+											pw = new PrintWriter(new FileOutputStream(file, true));
+											pw.println(mp.MsgString.split("\\|")[0]);
+											pw.close();
+										} catch (FileNotFoundException e) {
+											e.printStackTrace();
+										}
+										FriendList.add(new chatPanel(mp.MsgString.split("\\|")[0],
+												mp.MsgString.split("\\|")[0], Flag.FRIENDPANE));
+										FriendList.repaint();
+										FriendList.revalidate();
+									}
 									MsgList.remove(panel);
 								}
 
@@ -595,16 +660,109 @@ class ClientWindow extends JFrame implements Flag {
 						}
 						// 收到同意加好友的信息
 						case ACCEPTFRIEND -> {// A加B好友：A|B|Accept/Refuse
-							message = s.getMsgFromServer().readUTF();
 							String[] split = message.split("\\|");
 							if (split[2].equals("Accept")) {
-
+								File file = new File(filePath, "/friendList.txt");
+								if (!file.exists()) {
+									try {
+										file.createNewFile();
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+								}
+								PrintWriter pw;
+								try {
+									pw = new PrintWriter(new FileOutputStream(file, true));
+									pw.println(split[1]);
+									pw.close();
+								} catch (FileNotFoundException e) {
+									e.printStackTrace();
+								}
+								addMessage(split[1] + "接受了你的好友请求");
+								FriendList.add(new chatPanel(split[1], split[1], Flag.FRIENDPANE));
 							} else if (split[2].equals("Refuse")) {
-
+								addMessage(split[1] + "拒绝了你的好友请求");
 							}
 						}
-						case CREATEGROUP -> {// A建群:A|ID
+						case CREATEGROUP -> {// A建群:A|ID|name
+							if (tar.equals(s.getSelfName())) {
+								addMessage("建群成功！群ID为: " + message.split("\\|")[1]);
+							} else {
+								MsgList.add(new MsgPanel(new MsgPack(CREATEGROUP, message.split("\\|")[0], message)) {
 
+									@Override
+									String getMsgString(MsgPack mp) {
+										String str = mp.TargetName + " 向你发来群聊邀请,群id为:" + message.split("\\|")[1];
+										File file = new File(filePath, "/groupList.txt");
+										if (!file.exists()) {
+											try {
+												file.createNewFile();
+											} catch (IOException e) {
+												e.printStackTrace();
+											}
+										}
+										PrintWriter pw;
+										try {
+											pw = new PrintWriter(new FileOutputStream(file, true));
+											pw.println(
+													mp.MsgString.split("\\|")[1] + "\n" + mp.MsgString.split("\\|")[2]);
+											pw.close();
+										} catch (FileNotFoundException e) {
+											e.printStackTrace();
+										}
+										File groupHis = new File(filePath,
+												"/groupMsg/" + mp.MsgString.split("\\|")[1] + ".txt");
+										try {
+											groupHis.createNewFile();
+										} catch (IOException e) {
+											e.printStackTrace();
+										}
+										GroupList.add(new chatPanel(mp.MsgString.split("\\|")[2],
+												mp.MsgString.split("\\|")[1], Flag.GROUPPANE));
+										GroupList.repaint();
+										GroupList.revalidate();
+										return str;
+									}
+
+									@Override
+									void Send(String IsAccept) {
+										if (IsAccept.equals("Accept")) {// 这么写的话，如果拒绝加群就不发了
+											hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
+													mp.MsgString + "|" + IsAccept));// A|ID|NAME|ACCEPT
+											File file = new File(filePath, "/groupList.txt");
+											if (!file.exists()) {
+												try {
+													file.createNewFile();
+												} catch (IOException e) {
+													e.printStackTrace();
+												}
+											}
+											PrintWriter pw;
+											try {
+												pw = new PrintWriter(new FileOutputStream(file, true));
+												pw.println(mp.MsgString.split("\\|")[1] + "\n"
+														+ mp.MsgString.split("\\|")[2]);
+												pw.close();
+											} catch (FileNotFoundException e) {
+												e.printStackTrace();
+											}
+											File groupHis = new File(filePath,
+													"/groupMsg/" + mp.MsgString.split("\\|")[1] + ".txt");
+											try {
+												groupHis.createNewFile();
+											} catch (IOException e) {
+												e.printStackTrace();
+											}
+											GroupList.add(new chatPanel(mp.MsgString.split("\\|")[2],
+													mp.MsgString.split("\\|")[1], Flag.GROUPPANE));
+											GroupList.repaint();
+											GroupList.revalidate();
+										}
+										MsgList.remove(panel);
+									}
+
+								});
+							}
 						}
 						case DELETEFRIEND -> {// A删除自己:A
 
