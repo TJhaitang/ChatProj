@@ -244,7 +244,7 @@ public class ChatServer {
 			}
 
 			private void AcceptGroup(MsgPack mp) {
-				File file = new File(filePath.getParentFile(),
+				File file = new File(
 						System.getProperty("user.dir") + "/src/server/groups/" + mp.MsgString.split("\\|")[1] + ".txt");
 
 				try {
@@ -269,8 +269,7 @@ public class ChatServer {
 				File groupMem;
 				while (true) {
 					groupId = "G" + (int) (Math.random() * 1000000);
-					groupMem = new File(filePath.getParentFile(),
-							System.getProperty("user.dir") + "/src/server/groups/" + groupId + ".txt");
+					groupMem = new File(System.getProperty("user.dir") + "/src/server/groups/" + groupId + ".txt");
 					if (!groupMem.exists()) {
 						try {
 							groupMem.createNewFile();
