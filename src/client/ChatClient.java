@@ -159,47 +159,43 @@ class Login extends JFrame implements Flag {
 		textPanel.add(passwordPanel);
 		textPanel.setSize(100, 50);
 
-		loginButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+		loginButton.addActionListener(e->
+		{
 
-				if (IsSending == 1) {
-					return;
-				}
-				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-						|| passwordField.getPassword().length == 0) {
-					return;
-				}
-				try {
-					s.getMsgToServer().writeInt(1);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-						String.valueOf(passwordField.getPassword()), 1);
-				new Thread(messenger).start();
+			if (IsSending == 1) {
+				return;
 			}
+			if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
+					|| passwordField.getPassword().length == 0) {
+				return;
+			}
+			try {
+				s.getMsgToServer().writeInt(1);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			sendMesg messenger = new sendMesg(usernameTextArea.getText(),
+					String.valueOf(passwordField.getPassword()), 1);
+			new Thread(messenger).start();
 		});
 
-		SigninButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (IsSending == 1) {
-					return;
-				}
-				if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
-						|| passwordField.getPassword().length == 0) {
-					return;
-				}
-				try {
-					s.getMsgToServer().writeInt(2);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-						String.valueOf(passwordField.getPassword()), 2);
-				new Thread(messenger).start();
+		SigninButton.addActionListener(e->
+		{
+			if (IsSending == 1) {
+				return;
 			}
+			if (usernameTextArea.getText() == null || usernameTextArea.getText().equals("")
+					|| passwordField.getPassword().length == 0) {
+				return;
+			}
+			try {
+				s.getMsgToServer().writeInt(2);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			sendMesg messenger = new sendMesg(usernameTextArea.getText(),
+					String.valueOf(passwordField.getPassword()), 2);
+			new Thread(messenger).start();
 		});
 
 		usernameTextArea.addKeyListener(new KeyAdapter() {
