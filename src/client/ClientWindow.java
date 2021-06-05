@@ -2,7 +2,6 @@ package client;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.GroupLayout.Group;
 import javax.swing.plaf.metal.MetalIconFactory;
 
 import java.awt.*;
@@ -20,6 +19,7 @@ import java.util.Queue;
 class ClientWindow extends JFrame implements Flag {
 
 	private final HashMap<String, ChatWindow> chatWindows = new HashMap<>();// 这里改成了ChatWindow
+	private final HashMap<String, ChatPanel> chatPanels = new HashMap<>();// 这里改成了ChatWindow
 	private final ServerConnection sc;
 	private ClientWindow cw = this;
 	private final String myPath;
@@ -205,10 +205,14 @@ class ClientWindow extends JFrame implements Flag {
 			String tmp;
 			while ((tmp = br.readLine()) != null) {
 				if (sign == FRIENDPANE) {
-					targetPane.add(new chatPanel(tmp, tmp, sign));
+					ChatPanel chatPanel = new ChatPanel(tmp, tmp, sign);
+					chatPanels.put(tmp, chatPanel);
+					targetPane.add(chatPanel);
 				} else if (sign == GROUPPANE) {
 					String name = br.readLine();
-					targetPane.add(new chatPanel(name, tmp, sign));
+					ChatPanel chatPanel = new ChatPanel(name, tmp, sign);
+					chatPanels.put(tmp, chatPanel);
+					targetPane.add(chatPanel);
 				}
 			}
 			br.close();
@@ -285,47 +289,37 @@ class ClientWindow extends JFrame implements Flag {
 
 			textField.setColumns(10);
 			addButton.setMargin(new Insets(0, 0, 0, 0));
-			addButton.addActionListener(new ActionListener() {
+			addButton.addActionListener(e -> {
+				JPopupMenu popMenu = new JPopupMenu();
+				JMenuItem addFriend = new JMenuItem("加好友");
+				JMenuItem creatGroup = new JMenuItem("创建群聊");
+				popMenu.add(addFriend);
+				popMenu.add(creatGroup);
 
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					JPopupMenu popMenu = new JPopupMenu();
-					JMenuItem addFriend = new JMenuItem("加好友");
-					JMenuItem creatGroup = new JMenuItem("创建群聊");
-					popMenu.add(addFriend);
-					popMenu.add(creatGroup);
+				// 写一下输入检查
+				addFriend.addActionListener(e1 -> {
+					String str = textField.getText();
+					// if (!str.contains("\\|")) {
+					// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n好友1|好友2|......");
+					// return;
+					// }
+					textField.setText("");
+					hand.PutMsg(new MsgPack(Flag.ADDFRIEND, str, sc.getSelfName() + "|" + str));
+				});
 
-					addFriend.addActionListener(new ActionListener() {// 写一下输入检查
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							String str = textField.getText();
-							// if (!str.contains("\\|")) {
-							// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n好友1|好友2|......");
-							// return;
-							// }
-							textField.setText("");
-							hand.PutMsg(new MsgPack(Flag.ADDFRIEND, str, sc.getSelfName() + "|" + str));
-						}
-					});
+				creatGroup.addActionListener(e12 -> {
+					String str = textField.getText();
+					// if (!str.contains(":")) {
+					// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n群名:群成员1|群成员2|......");
+					// return;
+					// }
+					textField.setText("");
+					String groupName = str.split(":")[0];
+					str = str.split(":")[1];
+					hand.PutMsg(new MsgPack(Flag.CREATEGROUP, str, sc.getSelfName() + "|" + groupName));
+				});
 
-					creatGroup.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							String str = textField.getText();
-							// if (!str.contains(":")) {
-							// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n群名:群成员1|群成员2|......");
-							// return;
-							// }
-							textField.setText("");
-							String groupName = str.split(":")[0];
-							str = str.split(":")[1];
-							hand.PutMsg(new MsgPack(Flag.CREATEGROUP, str, sc.getSelfName() + "|" + groupName));
-						}
-					});
-
-					popMenu.show(cw, panel.getWidth() - 25, panel.getHeight() - 5);
-				}
-
+				popMenu.show(cw, panel.getWidth() - 25, panel.getHeight() - 5);
 			});
 			this.add(textField);
 			this.add(addButton);
@@ -371,21 +365,9 @@ class ClientWindow extends JFrame implements Flag {
 			AcceptButton.setBounds(65, 38, 60, 25);
 			RefuseButton.setBounds(140, 38, 60, 25);
 
-			AcceptButton.addActionListener(new ActionListener() {
+			AcceptButton.addActionListener(e -> Send("Accept"));
 
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					Send("Accept");
-				}
-
-			});
-
-			RefuseButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					Send("Refuse");
-				}
-			});
+			RefuseButton.addActionListener(e -> Send("Refuse"));
 
 			this.add(AcceptButton);
 			this.add(RefuseButton);
@@ -443,8 +425,8 @@ class ClientWindow extends JFrame implements Flag {
 		abstract void Send(String IsAccept);
 	}
 
-	private class chatPanel extends JPanel {// 这是选项卡类，在这里面实现对好友、群组、最近消息框的创建
-		private chatPanel panel = this;
+	private class ChatPanel extends JPanel {// 这是选项卡类，在这里面实现对好友、群组、最近消息框的创建
+		private final ChatPanel panel = this;
 		private String TargetId = "";
 		private String TargetName = "";
 		private int sign;
@@ -453,7 +435,7 @@ class ClientWindow extends JFrame implements Flag {
 		private JLabel recentTextArea;
 		private JLabel timeArea;
 
-		chatPanel() {
+		ChatPanel() {
 			panel.setPreferredSize(new Dimension(265, 70));
 			panel.setLayout(null);
 			panel.setBackground(Color.white);
@@ -493,18 +475,20 @@ class ClientWindow extends JFrame implements Flag {
 			});
 		}
 
-		chatPanel(String name, String id, int sign) {
+		ChatPanel(String name, String id, int sign) {
 			this();
 			this.TargetId = id;
 			this.TargetName = name;
 			this.sign = sign;
 			try {
+				recentTextArea = new JLabel();
+				timeArea = new JLabel();
 				// 名字的控件
 				nameArea = new JLabel(TargetName);
 				nameArea.setHorizontalAlignment(JLabel.LEFT);
 				// 头像的控件
 				pictureArea = new JLabel();
-				BufferedImage bi = null;
+				BufferedImage bi;
 				File imageFile = null;
 				if (sign == Flag.FRIENDPANE) {
 					imageFile = new File(myPath + "/friendIcon/" + id + ".jpg");
@@ -520,22 +504,7 @@ class ClientWindow extends JFrame implements Flag {
 				ImageIcon ic = new ImageIcon(newBI);
 				pictureArea.setIcon(ic);
 				// 最近一条消息的控件
-				String lastLine;
-				if (sign == Flag.FRIENDPANE) {
-					lastLine = MyUtil.readLastLine(new File(myPath + "/friendMsg/" + TargetId + ".txt"), null);
-				} else {
-					// sign = GroupPane
-					lastLine = MyUtil.readLastLine(new File(myPath + "/groupMsg/" + TargetId + ".txt"), null);
-				}
-				if (lastLine == null || lastLine.equals("")) {
-					recentTextArea = new JLabel();
-					timeArea = new JLabel();
-				} else {
-					recentTextArea = new JLabel(lastLine.split("\\|")[1] + ":" + lastLine.split("\\|")[3]);
-					// 最近一条消息时间的控件
-					// 怎么修改时间格式？
-					timeArea = new JLabel(lastLine.split("\\|")[0]);
-				}
+				updateRecentMsg(sign, "");
 				recentTextArea.setFont(new Font("宋体", Font.PLAIN, 10));
 				timeArea.setFont(new Font("宋体", Font.PLAIN, 10));
 				// 添加控件
@@ -551,6 +520,30 @@ class ClientWindow extends JFrame implements Flag {
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.out.println("头像无法读取!");
+			}
+		}
+
+		public void updateRecentMsg(int sign, String updateLine) {
+			if (!updateLine.equals("")) {
+				recentTextArea.setText(updateLine.split("\\|")[1] + ":" + updateLine.split("\\|")[3]);
+				timeArea.setText(updateLine.split("\\|")[0]);
+				return;
+			}
+			String lastLine;
+			if (sign == Flag.FRIENDPANE) {
+				lastLine = MyUtil.readLastLine(new File(myPath + "/friendMsg/" + TargetId + ".txt"), null);
+			} else {
+				// sign = GroupPane
+				lastLine = MyUtil.readLastLine(new File(myPath + "/groupMsg/" + TargetId + ".txt"), null);
+			}
+			if (lastLine == null || "".equals(lastLine)) {
+				recentTextArea.setText("");
+				timeArea.setText("");
+			} else {
+				recentTextArea.setText(lastLine.split("\\|")[1] + ":" + lastLine.split("\\|")[3]);
+				// 最近一条消息时间的控件
+				// 怎么修改时间格式？
+				timeArea.setText(lastLine.split("\\|")[0]);
 			}
 		}
 	}
@@ -620,6 +613,7 @@ class ClientWindow extends JFrame implements Flag {
 										s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
 								PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
 								pw.println(message);
+								cw.chatPanels.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
 								pw.close();
 							} else {
 								if (chatWindows.containsKey(split[5])) {
@@ -629,6 +623,7 @@ class ClientWindow extends JFrame implements Flag {
 								File chatRecord = new File(s.getParentFile(),
 										s.getSelfName() + "/groupMsg/" + split[5] + ".txt");
 								PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+								cw.chatPanels.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
 								pw.println(message);
 								pw.close();
 							}
@@ -666,7 +661,7 @@ class ClientWindow extends JFrame implements Flag {
 										} catch (FileNotFoundException e) {
 											e.printStackTrace();
 										}
-										FriendList.add(new chatPanel(mp.MsgString.split("\\|")[0],
+										FriendList.add(new ChatPanel(mp.MsgString.split("\\|")[0],
 												mp.MsgString.split("\\|")[0], Flag.FRIENDPANE));
 										FriendList.repaint();
 										FriendList.revalidate();
@@ -698,7 +693,7 @@ class ClientWindow extends JFrame implements Flag {
 									e.printStackTrace();
 								}
 								addMessage(split[1] + "接受了你的好友请求");
-								FriendList.add(new chatPanel(split[1], split[1], Flag.FRIENDPANE));
+								FriendList.add(new ChatPanel(split[1], split[1], Flag.FRIENDPANE));
 							} else if (split[2].equals("Refuse")) {
 								addMessage(split[1] + "拒绝了你的好友请求");
 							}
@@ -729,7 +724,7 @@ class ClientWindow extends JFrame implements Flag {
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
-								GroupList.add(new chatPanel(message.split("\\|")[2], message.split("\\|")[1],
+								GroupList.add(new ChatPanel(message.split("\\|")[2], message.split("\\|")[1],
 										Flag.GROUPPANE));
 								GroupList.repaint();
 								GroupList.revalidate();
@@ -772,7 +767,7 @@ class ClientWindow extends JFrame implements Flag {
 											} catch (IOException e) {
 												e.printStackTrace();
 											}
-											GroupList.add(new chatPanel(mp.MsgString.split("\\|")[2],
+											GroupList.add(new ChatPanel(mp.MsgString.split("\\|")[2],
 													mp.MsgString.split("\\|")[1], Flag.GROUPPANE));
 											GroupList.repaint();
 											GroupList.revalidate();
@@ -841,7 +836,7 @@ class ClientWindow extends JFrame implements Flag {
 					s.getMsgToServer().writeUTF(mp.TargetName);
 					s.getMsgToServer().writeUTF(mp.MsgString);
 					// 如果这是发信息，那么就写文件
-					File chatRecord = null;
+					File chatRecord;
 					if (mp.TargetName.toCharArray()[0] != 'G') {
 						chatRecord = new File(s.getParentFile(),
 								s.getSelfName() + "/friendMsg/" + mp.TargetName + ".txt");
@@ -851,6 +846,7 @@ class ClientWindow extends JFrame implements Flag {
 					}
 					PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
 					pw.println(mp.MsgString);
+					cw.chatPanels.get(mp.TargetName).updateRecentMsg(Flag.FRIENDPANE, mp.MsgString);
 					pw.close();
 				} catch (IOException e) {
 					// 写文件
