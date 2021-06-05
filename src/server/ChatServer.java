@@ -261,6 +261,15 @@ public class ChatServer {
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 				}
+				try {
+					pw = new PrintWriter(new FileOutputStream(new File(
+							System.getProperty("user.dir") + "/src/server/users/" + t.getUsername() + "/groupList.txt"),
+							true));
+					pw.println(mp.MsgString.split("\\|")[1] + "\n" + mp.MsgString.split("\\|")[2]);
+					pw.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
 			}
 
 			private void CreateGroup(MsgPack mp) {
@@ -290,6 +299,15 @@ public class ChatServer {
 				}
 				SendMsgToUser(new MsgPack(Flag.CREATEGROUP, t.getUsername(),
 						t.getUsername() + "|" + groupId + "|" + groupName));
+				try {
+					pw = new PrintWriter(new FileOutputStream(new File(
+							System.getProperty("user.dir") + "/src/server/users/" + t.getUsername() + "/groupList.txt"),
+							true));
+					pw.println(mp.MsgString.split("\\|")[1] + "\n" + mp.MsgString.split("\\|")[2]);
+					pw.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
 				for (int i = 0; i < users.length; i++) {
 					if (!users[i].equals(t.getUsername()))
 						SendMsgToUser(new MsgPack(Flag.CREATEGROUP, users[i],

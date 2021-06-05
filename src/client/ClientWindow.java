@@ -540,6 +540,7 @@ class ClientWindow extends JFrame implements Flag {
 				recentTextArea.setText("");
 				timeArea.setText("");
 			} else {
+				// System.out.println("****\n" + lastLine + "\n****");
 				recentTextArea.setText(lastLine.split("\\|")[1] + ":" + lastLine.split("\\|")[3]);
 				// 最近一条消息时间的控件
 				// 怎么修改时间格式？

@@ -29,11 +29,4 @@
 2021-05-29 12:33:16|secondPerson|0|qq|TEXT|admin
 2021-05-29 12:33:19|secondPerson|0|www|TEXT|admin
 2021-05-30 23:08:30|admin|0|www|TEXT|secondPerson
-<<<<<<< HEAD
 2021-06-04 15:01:06|admin|0|123|TEXT|secondPerson
-=======
-2021-06-04 15:03:33|admin|0|aaa|TEXT|secondPerson
-2021-06-04 15:03:56|admin|0|b|TEXT|secondPerson
-2021-06-04 15:16:35|admin|0|5|TEXT|secondPerson
-2021-06-04 15:18:29|admin|0|1|TEXT|secondPerson
->>>>>>> 6e8dd7389c96c60623bf0c0409a6d5e47b4bdfad
