@@ -604,6 +604,7 @@ class ClientWindow extends JFrame implements Flag {
 										pw.println(message);
 										cw.chatPanels.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
 										cw.chatPanels2.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
+										sortRecentPane(cw.chatPanels2.get(split[5]));
 										pw.close();
 									} else {
 										if (chatWindows.containsKey(split[5])) {
@@ -615,6 +616,7 @@ class ClientWindow extends JFrame implements Flag {
 										PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
 										cw.chatPanels.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
 										cw.chatPanels2.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
+										sortRecentPane(cw.chatPanels2.get(split[5]));
 										pw.println(message);
 										pw.close();
 									}
@@ -829,6 +831,7 @@ class ClientWindow extends JFrame implements Flag {
 					pw.println(mp.MsgString);
 					cw.chatPanels.get(mp.TargetName).updateRecentMsg(Flag.FRIENDPANE, mp.MsgString);
 					cw.chatPanels2.get(mp.TargetName).updateRecentMsg(Flag.FRIENDPANE, mp.MsgString);
+					sortRecentPane(cw.chatPanels2.get(mp.TargetName));
 					pw.close();
 				} catch (IOException e) {
 					// 写文件
@@ -840,6 +843,11 @@ class ClientWindow extends JFrame implements Flag {
 
 		}
 
+	}
+	// 最近消息重新排序
+	private void sortRecentPane(ChatPanel chatPanel) {
+		RecentList.remove(chatPanel);
+		RecentList.add(chatPanel, 0);
 	}
 }
 
