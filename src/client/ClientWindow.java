@@ -704,42 +704,42 @@ class ClientWindow extends JFrame implements Flag {
 							}
 						}
 						case CREATEGROUP -> {// A建群:A|ID|name
-							if (tar.equals(s.getSelfName())) {
+							String creater = message.split("\\|")[0];
+							if (creater.equals(s.getSelfName())) {// 我套我这里写的时候是没睡醒么我写的是个啥啊
 								addMessage("建群成功！群ID为: " + message.split("\\|")[1]);
+								File file = new File(filePath, "/groupList.txt");
+								if (!file.exists()) {
+									try {
+										file.createNewFile();
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+								}
+								PrintWriter pw;
+								try {
+									pw = new PrintWriter(new FileOutputStream(file, true));
+									pw.println(message.split("\\|")[1] + "\n" + message.split("\\|")[2]);
+									pw.close();
+								} catch (FileNotFoundException e) {
+									e.printStackTrace();
+								}
+								File groupHis = new File(filePath, "/groupMsg/" + message.split("\\|")[1] + ".txt");
+								try {
+									groupHis.createNewFile();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+								GroupList.add(new chatPanel(message.split("\\|")[2], message.split("\\|")[1],
+										Flag.GROUPPANE));
+								GroupList.repaint();
+								GroupList.revalidate();
 							} else {
 								MsgList.add(new MsgPanel(new MsgPack(CREATEGROUP, message.split("\\|")[0], message)) {
 
 									@Override
 									String getMsgString(MsgPack mp) {
-										String str = mp.TargetName + " 向你发来群聊邀请,群id为:" + mp.MsgString.split("\\|")[1];
-										File file = new File(filePath, "/groupList.txt");
-										if (!file.exists()) {
-											try {
-												file.createNewFile();
-											} catch (IOException e) {
-												e.printStackTrace();
-											}
-										}
-										PrintWriter pw;
-										try {
-											pw = new PrintWriter(new FileOutputStream(file, true));
-											pw.println(
-													mp.MsgString.split("\\|")[1] + "\n" + mp.MsgString.split("\\|")[2]);
-											pw.close();
-										} catch (FileNotFoundException e) {
-											e.printStackTrace();
-										}
-										File groupHis = new File(filePath,
-												"/groupMsg/" + mp.MsgString.split("\\|")[1] + ".txt");
-										try {
-											groupHis.createNewFile();
-										} catch (IOException e) {
-											e.printStackTrace();
-										}
-										GroupList.add(new chatPanel(mp.MsgString.split("\\|")[2],
-												mp.MsgString.split("\\|")[1], Flag.GROUPPANE));
-										GroupList.repaint();
-										GroupList.revalidate();
+										String str = mp.MsgString.split("\\|")[0] + " 向你发来群聊邀请,群id为:"
+												+ mp.MsgString.split("\\|")[1];
 										return str;
 									}
 

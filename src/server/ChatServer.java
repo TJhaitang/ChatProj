@@ -246,6 +246,7 @@ public class ChatServer {
 			private void AcceptGroup(MsgPack mp) {
 				File file = new File(
 						System.getProperty("user.dir") + "/src/server/groups/" + mp.MsgString.split("\\|")[1] + ".txt");
+				System.out.println("qwwe:" + file.getAbsolutePath() + "  " + t.getUsername());
 
 				try {
 					file.createNewFile();
@@ -357,7 +358,7 @@ public class ChatServer {
 				if (UserMap.containsKey(mp.TargetName)) {
 					System.out.println("向" + mp.TargetName + "发送信息");
 					HandleASession h2 = UserMap.get(mp.TargetName);
-					h2.sender.PutMsg(new MsgPack(mp.flag, mp.TargetName, mp.MsgString));// str格式再想一下
+					h2.sender.PutMsg(mp);// str格式再想一下
 				} else {
 					AddMsgToFile(mp.TargetName, new MsgPack(mp.flag, mp.TargetName, mp.MsgString));
 				}
