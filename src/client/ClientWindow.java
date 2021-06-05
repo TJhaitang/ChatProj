@@ -10,9 +10,8 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
+import java.util.List;
 
 // 传进用户ID，用s连接到服务器,创建界面（做按钮、界面列表、个人信息、朋友圈入口）
 // 按钮连接到聊天框、朋友圈界面
@@ -20,16 +19,18 @@ class ClientWindow extends JFrame implements Flag {
 
 	private final HashMap<String, ChatWindow> chatWindows = new HashMap<>();// 这里改成了ChatWindow
 	private final HashMap<String, ChatPanel> chatPanels = new HashMap<>();// 这里改成了ChatWindow
+	private final HashMap<String, ChatPanel> chatPanels2 = new HashMap<>();// 这里改成了ChatWindow
 	private final ServerConnection sc;
-	private ClientWindow cw = this;
+	private final ClientWindow cw = this;
 	private final String myPath;
 	public HandleASession hand;
 
-	private JTabbedPane tabbedPane;
+	private final JTabbedPane tabbedPane;
 	private TargetList FriendList;
 	private TargetList GroupList;
-	private TargetList MsgList = new TargetList();
-	private UserPanel userPanel;
+	private TargetList RecentList = new TargetList();
+	private final TargetList MsgList = new TargetList();
+	private final UserPanel userPanel;
 
 	ClientWindow(ServerConnection s) {
 		this.setLayout(null);
@@ -48,22 +49,20 @@ class ClientWindow extends JFrame implements Flag {
 		tabbedPane.setBackground(Color.white);
 		tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		// 创建整个好友列表
-		// createScrollPanel(tabbedPane, Flag.RECENTPANE);
+
 		createScrollPanel(tabbedPane, Flag.FRIENDPANE);
 		createScrollPanel(tabbedPane, Flag.GROUPPANE);
 		createScrollPanel(tabbedPane, Flag.MESSAGE);
-
-		tabbedPane.setEnabledAt(1, true);
+		createScrollPanel(tabbedPane, Flag.RECENTPANE);
+		//		tabbedPane.setEnabledAt(1, true);
 		tabbedPane.setSelectedIndex(0);
 		tabbedPane.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseEntered(MouseEvent e) {
+			@Override public void mouseEntered(MouseEvent e) {
 				super.mouseEntered(e);
 				tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 			}
 
-			@Override
-			public void mouseExited(MouseEvent e) {
+			@Override public void mouseExited(MouseEvent e) {
 				super.mouseExited(e);
 				tabbedPane.setCursor(Cursor.getDefaultCursor());
 			}
@@ -78,8 +77,7 @@ class ClientWindow extends JFrame implements Flag {
 		this.add(tabbedPane);
 
 		this.addComponentListener(new ComponentAdapter() {
-			@Override
-			public void componentResized(ComponentEvent e) {
+			@Override public void componentResized(ComponentEvent e) {
 				int width = getContentPane().getWidth();
 				int height = getContentPane().getHeight();
 				userPanel.setBounds(0, 0, width, 70);
@@ -131,21 +129,13 @@ class ClientWindow extends JFrame implements Flag {
 
 	private void createScrollPanel(JTabbedPane tabbedPane, int id) {
 		switch (id) {
-		case FRIENDPANE -> {
-			createPane(tabbedPane, new MetalIconFactory.TreeControlIcon(true), "friendList.txt", "好友列表",
-					"这里有你和所有好友聊天的信息", FRIENDPANE);
-		}
-		case GROUPPANE -> {
-			createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(), "groupList.txt", "群组列表", "这里有你和所有群聊天的信息",
-					GROUPPANE);
-		}
-		case MESSAGE -> {
-			createMsgPane(tabbedPane, new MetalIconFactory.FolderIcon16());
-		}
-		case RECENTPANE -> {
-			createPane(tabbedPane, new MetalIconFactory.PaletteCloseIcon(), "聊天信息", "最近消息", "这里有你和所有最近聊天的信息",
-					RECENTPANE);
-		}
+		case FRIENDPANE -> createPane(tabbedPane, new MetalIconFactory.TreeControlIcon(true), "friendList.txt", "好友列表",
+				"这里有你和所有好友聊天的信息", FRIENDPANE);
+		case GROUPPANE -> createPane(tabbedPane, new MetalIconFactory.TreeLeafIcon(), "groupList.txt", "群组列表",
+				"这里有你和所有群聊天的信息", GROUPPANE);
+		case MESSAGE -> createMsgPane(tabbedPane, new MetalIconFactory.FolderIcon16());
+		case RECENTPANE -> createPane(tabbedPane, new MetalIconFactory.FolderIcon16(), "聊天信息", "最近消息", "这里有你和所有最近聊天的信息",
+				RECENTPANE);
 		}
 	}
 
@@ -156,73 +146,81 @@ class ClientWindow extends JFrame implements Flag {
 		scrollPane.getVerticalScrollBar().setUnitIncrement(13);
 		tabbedPane.addTab("消息列表", paneIcon, scrollPane, "这里是你的消息通知列表");
 		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
-
-			@Override
-			String getMsgString(MsgPack mp) {
+			@Override String getMsgString(MsgPack mp) {
 				return "测试";
 			}
 
-			@Override
-			void Send(String IsAccept) {
+			@Override void Send(String IsAccept) {
 				MsgList.remove(panel);
 			}
-
 		});
 		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
-
-			@Override
-			String getMsgString(MsgPack mp) {
+			@Override String getMsgString(MsgPack mp) {
 				return "测试";
 			}
 
-			@Override
-			void Send(String IsAccept) {
+			@Override void Send(String IsAccept) {
 				MsgList.remove(panel);
 			}
-
 		});
 		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
-
-			@Override
-			String getMsgString(MsgPack mp) {
+			@Override String getMsgString(MsgPack mp) {
 				return "测试";
 			}
 
-			@Override
-			void Send(String IsAccept) {
+			@Override void Send(String IsAccept) {
 				MsgList.remove(panel);
 			}
-
 		});
 	}
 
 	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip, int sign) {
 		TargetList targetPane = new TargetList();
 		targetPane.setLayout(new FlowLayout(FlowLayout.CENTER));
-		BufferedReader br;
-		try {
-			br = new BufferedReader(new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));// 文件路径调用前面的
-			String tmp;
-			while ((tmp = br.readLine()) != null) {
-				if (sign == FRIENDPANE) {
-					ChatPanel chatPanel = new ChatPanel(tmp, tmp, sign);
-					chatPanels.put(tmp, chatPanel);
-					targetPane.add(chatPanel);
-				} else if (sign == GROUPPANE) {
-					String name = br.readLine();
-					ChatPanel chatPanel = new ChatPanel(name, tmp, sign);
-					chatPanels.put(tmp, chatPanel);
-					targetPane.add(chatPanel);
-				}
+		// 最近消息最后再创建
+		if (sign == RECENTPANE) {
+			List<Map.Entry<String, ChatPanel>> arrayList = new ArrayList<>(chatPanels2.entrySet());
+			arrayList.sort((o1, o2)->o2.getValue().timeArea.getText().compareTo(o1.getValue().timeArea.getText()));
+			for (Map.Entry<String, ChatPanel> stringChatPanelEntry : arrayList) {
+				targetPane.add(stringChatPanelEntry.getValue());
 			}
-			br.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if (sign == FRIENDPANE) {
-			FriendList = targetPane;
-		} else if (sign == GROUPPANE) {
-			GroupList = targetPane;
+			RecentList = targetPane;
+			JScrollPane scrollPane = new JScrollPane(targetPane, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+					JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+			// 设置滚轮速度(默认的太慢了)
+			scrollPane.getVerticalScrollBar().setUnitIncrement(13);
+			tabbedPane.insertTab(title, paneIcon, scrollPane, tip, 0);
+			return;
+		} else {
+			// 好友和群组的列表
+			BufferedReader br;
+			try {
+				// 文件路径调用前面的
+				br = new BufferedReader(new FileReader(new File(sc.getParentFile(), sc.getSelfName() + "/" + list)));
+				String tmp;
+				while ((tmp = br.readLine()) != null) {
+					if (sign == FRIENDPANE) {
+						ChatPanel chatPanel = new ChatPanel(tmp, tmp, sign);
+						chatPanels.put(tmp, chatPanel);
+						chatPanels2.put(tmp, new ChatPanel(tmp, tmp, sign));
+						targetPane.add(chatPanel);
+					} else if (sign == GROUPPANE) {
+						String name = br.readLine();
+						ChatPanel chatPanel = new ChatPanel(name, tmp, sign);
+						chatPanels.put(tmp, chatPanel);
+						chatPanels2.put(tmp, new ChatPanel(name, tmp, sign));
+						targetPane.add(chatPanel);
+					}
+				}
+				br.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if (sign == FRIENDPANE) {
+				FriendList = targetPane;
+			} else if (sign == GROUPPANE) {
+				GroupList = targetPane;
+			}
 		}
 
 		JScrollPane scrollPane = new JScrollPane(targetPane, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -240,13 +238,11 @@ class ClientWindow extends JFrame implements Flag {
 	public void addMessage(String s) {
 		MsgList.add(new MsgPanel(s) {
 
-			@Override
-			String getMsgString(MsgPack mp) {
+			@Override String getMsgString(MsgPack mp) {
 				return null;
 			}
 
-			@Override
-			void Send(String IsAccept) {
+			@Override void Send(String IsAccept) {
 				MsgList.remove(this);
 			}
 
@@ -289,7 +285,8 @@ class ClientWindow extends JFrame implements Flag {
 
 			textField.setColumns(10);
 			addButton.setMargin(new Insets(0, 0, 0, 0));
-			addButton.addActionListener(e -> {
+			addButton.addActionListener(e->
+			{
 				JPopupMenu popMenu = new JPopupMenu();
 				JMenuItem addFriend = new JMenuItem("加好友");
 				JMenuItem creatGroup = new JMenuItem("创建群聊");
@@ -297,7 +294,8 @@ class ClientWindow extends JFrame implements Flag {
 				popMenu.add(creatGroup);
 
 				// 写一下输入检查
-				addFriend.addActionListener(e1 -> {
+				addFriend.addActionListener(e1->
+				{
 					String str = textField.getText();
 					// if (!str.contains("\\|")) {
 					// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n好友1|好友2|......");
@@ -307,7 +305,8 @@ class ClientWindow extends JFrame implements Flag {
 					hand.PutMsg(new MsgPack(Flag.ADDFRIEND, str, sc.getSelfName() + "|" + str));
 				});
 
-				creatGroup.addActionListener(e12 -> {
+				creatGroup.addActionListener(e12->
+				{
 					String str = textField.getText();
 					// if (!str.contains(":")) {
 					// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n群名:群成员1|群成员2|......");
@@ -333,15 +332,13 @@ class ClientWindow extends JFrame implements Flag {
 			this.setLayout(new FlowLayout(FlowLayout.CENTER));
 		}
 
-		@Override
-		public Component add(Component comp) {
+		@Override public Component add(Component comp) {
 			count += 1;
 			this.setPreferredSize(new Dimension(265, 70 * count));
 			return super.add(comp);
 		}
 
-		@Override
-		public void remove(Component comp) {
+		@Override public void remove(Component comp) {
 			count -= 1;
 			this.setPreferredSize(new Dimension(265, 70 * count));
 			super.remove(comp);
@@ -365,40 +362,35 @@ class ClientWindow extends JFrame implements Flag {
 			AcceptButton.setBounds(65, 38, 60, 25);
 			RefuseButton.setBounds(140, 38, 60, 25);
 
-			AcceptButton.addActionListener(e -> Send("Accept"));
+			AcceptButton.addActionListener(e->Send("Accept"));
 
-			RefuseButton.addActionListener(e -> Send("Refuse"));
+			RefuseButton.addActionListener(e->Send("Refuse"));
 
 			this.add(AcceptButton);
 			this.add(RefuseButton);
 
 			this.addMouseListener(new MouseListener() {
 
-				@Override
-				public void mouseClicked(MouseEvent e) {
+				@Override public void mouseClicked(MouseEvent e) {
 					// TODO Auto-generated method stub
 
 				}
 
-				@Override
-				public void mousePressed(MouseEvent e) {
+				@Override public void mousePressed(MouseEvent e) {
 					// TODO Auto-generated method stub
 
 				}
 
-				@Override
-				public void mouseReleased(MouseEvent e) {
+				@Override public void mouseReleased(MouseEvent e) {
 					// TODO Auto-generated method stub
 
 				}
 
-				@Override
-				public void mouseEntered(MouseEvent e) {
+				@Override public void mouseEntered(MouseEvent e) {
 					panel.setBackground(Color.lightGray);
 				}
 
-				@Override
-				public void mouseExited(MouseEvent e) {
+				@Override public void mouseExited(MouseEvent e) {
 					panel.setBackground(Color.white);
 				}
 			});
@@ -440,8 +432,7 @@ class ClientWindow extends JFrame implements Flag {
 			panel.setLayout(null);
 			panel.setBackground(Color.white);
 			this.addMouseListener(new MouseListener() {
-				@Override
-				public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
+				@Override public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
 					if (chatWindows.containsKey(TargetId)) {
 						chatWindows.get(TargetId).setVisible(true);
 					} else {
@@ -453,23 +444,19 @@ class ClientWindow extends JFrame implements Flag {
 					}
 				}
 
-				@Override
-				public void mousePressed(MouseEvent e) {
+				@Override public void mousePressed(MouseEvent e) {
 					panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				}
 
-				@Override
-				public void mouseReleased(MouseEvent e) {
+				@Override public void mouseReleased(MouseEvent e) {
 					panel.setCursor(Cursor.getDefaultCursor());
 				}
 
-				@Override
-				public void mouseEntered(MouseEvent e) {
+				@Override public void mouseEntered(MouseEvent e) {
 					panel.setBackground(Color.lightGray);
 				}
 
-				@Override
-				public void mouseExited(MouseEvent e) {
+				@Override public void mouseExited(MouseEvent e) {
 					panel.setBackground(Color.white);
 				}
 			});
@@ -504,7 +491,9 @@ class ClientWindow extends JFrame implements Flag {
 				ImageIcon ic = new ImageIcon(newBI);
 				pictureArea.setIcon(ic);
 				// 最近一条消息的控件
+
 				updateRecentMsg(sign, "");
+
 				recentTextArea.setFont(new Font("宋体", Font.PLAIN, 10));
 				timeArea.setFont(new Font("宋体", Font.PLAIN, 10));
 				// 添加控件
@@ -550,7 +539,7 @@ class ClientWindow extends JFrame implements Flag {
 	}
 
 	public class HandleASession {
-		private File filePath;// 在这里实现信息交互
+		private final File filePath;// 在这里实现信息交互
 		ServerConnection s;
 		Reciever reciever = new Reciever();
 		Sender sender = new Sender();
@@ -590,8 +579,7 @@ class ClientWindow extends JFrame implements Flag {
 
 		private class Reciever implements Runnable {
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					int sign;
 					String message, tar;
@@ -603,46 +591,46 @@ class ClientWindow extends JFrame implements Flag {
 						case SENDFILE -> {
 						}
 						case SENDTEXT -> // 先实现这部分功能尝试一下运行
-						{
-							String[] split = message.split("\\|");
-							if (split[5].toCharArray()[0] != 'G') {// 若为已打开窗口则写入窗口中
-								if (chatWindows.containsKey(split[1])) {
-									chatWindows.get(split[1]).AddMessage(message);
-								}
-								// 写入本地文件
-								File chatRecord = new File(s.getParentFile(),
-										s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
-								PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-								pw.println(message);
-								cw.chatPanels.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
-								pw.close();
-							} else {
-								if (chatWindows.containsKey(split[5])) {
-									chatWindows.get(split[5]).AddMessage(message);
-								}
-								// 写入本地文件
-								File chatRecord = new File(s.getParentFile(),
-										s.getSelfName() + "/groupMsg/" + split[5] + ".txt");
-								PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-								cw.chatPanels.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
-								pw.println(message);
-								pw.close();
-							}
+								{
+									String[] split = message.split("\\|");
+									if (split[5].toCharArray()[0] != 'G') {// 若为已打开窗口则写入窗口中
+										if (chatWindows.containsKey(split[1])) {
+											chatWindows.get(split[1]).AddMessage(message);
+										}
+										// 写入本地文件
+										File chatRecord = new File(s.getParentFile(),
+												s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
+										PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+										pw.println(message);
+										cw.chatPanels.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
+										cw.chatPanels2.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
+										pw.close();
+									} else {
+										if (chatWindows.containsKey(split[5])) {
+											chatWindows.get(split[5]).AddMessage(message);
+										}
+										// 写入本地文件
+										File chatRecord = new File(s.getParentFile(),
+												s.getSelfName() + "/groupMsg/" + split[5] + ".txt");
+										PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+										cw.chatPanels.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
+										cw.chatPanels2.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
+										pw.println(message);
+										pw.close();
+									}
 
-							// 写入用户主窗口
-						}
+									// 写入用户主窗口
+								}
 						// 收到请求加好友的信息
 						case ADDFRIEND -> {// A加B好友：A|B
 							MsgList.add(new MsgPanel(new MsgPack(ADDFRIEND, message.split("\\|")[0], message)) {
 
-								@Override
-								String getMsgString(MsgPack mp) {
+								@Override String getMsgString(MsgPack mp) {
 									String str = mp.TargetName + " 向你发来好友申请";
 									return str;
 								}
 
-								@Override
-								void Send(String IsAccept) {
+								@Override void Send(String IsAccept) {
 									hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
 											mp.MsgString + "|" + IsAccept));
 									if (IsAccept.equals("Accept")) {
@@ -732,15 +720,13 @@ class ClientWindow extends JFrame implements Flag {
 							} else {
 								MsgList.add(new MsgPanel(new MsgPack(CREATEGROUP, message.split("\\|")[0], message)) {
 
-									@Override
-									String getMsgString(MsgPack mp) {
-										String str = mp.MsgString.split("\\|")[0] + " 向你发来群聊邀请,群id为:"
-												+ mp.MsgString.split("\\|")[1];
+									@Override String getMsgString(MsgPack mp) {
+										String str = mp.MsgString.split("\\|")[0] + " 向你发来群聊邀请,群id为:" + mp.MsgString
+												.split("\\|")[1];
 										return str;
 									}
 
-									@Override
-									void Send(String IsAccept) {
+									@Override void Send(String IsAccept) {
 										if (IsAccept.equals("Accept")) {// 这么写的话，如果拒绝加群就不发了
 											hand.PutMsg(new MsgPack(ACCEPTGROUP, this.mp.TargetName,
 													mp.MsgString + "|" + IsAccept));// A|ID|NAME|ACCEPT
@@ -755,8 +741,8 @@ class ClientWindow extends JFrame implements Flag {
 											PrintWriter pw;
 											try {
 												pw = new PrintWriter(new FileOutputStream(file, true));
-												pw.println(mp.MsgString.split("\\|")[1] + "\n"
-														+ mp.MsgString.split("\\|")[2]);
+												pw.println(mp.MsgString.split("\\|")[1] + "\n" + mp.MsgString
+														.split("\\|")[2]);
 												pw.close();
 											} catch (FileNotFoundException e) {
 												e.printStackTrace();
@@ -798,8 +784,7 @@ class ClientWindow extends JFrame implements Flag {
 
 		private class Sender implements Runnable {
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				while (go == 1) {
 					try {
 						Thread.sleep(5);// 为啥能用了？
@@ -809,14 +794,10 @@ class ClientWindow extends JFrame implements Flag {
 					if (!MsgQueue.isEmpty()) {
 						MsgPack mp = MsgQueue.poll();
 						switch (mp.flag) {
-						case Flag.SENDTEXT: {
-							SendText(mp);
-							break;
+						case Flag.SENDTEXT -> SendText(mp);
+						case Flag.SENDFILE -> {
 						}
-						case Flag.SENDFILE: {
-							break;
-						}
-						default: {
+						default -> {
 							try {
 								s.getMsgToServer().writeInt(mp.flag);
 								s.getMsgToServer().writeUTF(mp.TargetName);
@@ -824,7 +805,6 @@ class ClientWindow extends JFrame implements Flag {
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
-							break;
 						}
 						}
 					}
@@ -848,6 +828,7 @@ class ClientWindow extends JFrame implements Flag {
 					PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
 					pw.println(mp.MsgString);
 					cw.chatPanels.get(mp.TargetName).updateRecentMsg(Flag.FRIENDPANE, mp.MsgString);
+					cw.chatPanels2.get(mp.TargetName).updateRecentMsg(Flag.FRIENDPANE, mp.MsgString);
 					pw.close();
 				} catch (IOException e) {
 					// 写文件

@@ -43,8 +43,7 @@ public class ChatServer {
 			this.t = tar;
 		}
 
-		@Override
-		public void run() {
+		@Override public void run() {
 			int sign;
 			String username;
 			String password;
@@ -195,8 +194,7 @@ public class ChatServer {
 
 		private class Receiver implements Runnable {
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				String path;
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					try {
@@ -209,8 +207,7 @@ public class ChatServer {
 							SendMsg(mp);
 							break;
 						}
-						case Flag.SENDFILE:/* 往下先等等 */
-						{
+						case Flag.SENDFILE:/* 往下先等等 */ {
 							break;
 						}
 						case Flag.ADDFRIEND: {
@@ -309,9 +306,10 @@ public class ChatServer {
 					e.printStackTrace();
 				}
 				for (int i = 0; i < users.length; i++) {
-					if (!users[i].equals(t.getUsername()))
+					if (!users[i].equals(t.getUsername())) {
 						SendMsgToUser(new MsgPack(Flag.CREATEGROUP, users[i],
 								t.getUsername() + "|" + groupId + "|" + groupName));
+					}
 				}
 			}
 
@@ -341,8 +339,9 @@ public class ChatServer {
 			private void AddFriend(MsgPack mp) {// 这里没判断是否有这个好友
 				String[] users = mp.TargetName.split("\\|");
 				for (int i = 0; i < users.length; i++) {
-					if (!users[i].equals(t.getUsername()))
+					if (!users[i].equals(t.getUsername())) {
 						SendMsgToUser(new MsgPack(Flag.ADDFRIEND, users[i], t.getUsername() + "|" + users[i]));
+					}
 				}
 			}
 
@@ -359,8 +358,9 @@ public class ChatServer {
 						BufferedReader br = new BufferedReader(new FileReader(UserList));
 						String name;
 						while ((name = br.readLine()) != null) {
-							if (!name.equals(t.getUsername()))
+							if (!name.equals(t.getUsername())) {
 								SendMsgToUser(new MsgPack(Flag.SENDTEXT, name, Msg));
+							}
 						}
 						br.close();
 					} catch (FileNotFoundException e) {
@@ -400,8 +400,7 @@ public class ChatServer {
 				// System.out.println("测试一下");
 			}
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				this.display();
 				while (go == 1) {
 					try {
