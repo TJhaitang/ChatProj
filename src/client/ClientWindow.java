@@ -49,7 +49,6 @@ class ClientWindow extends JFrame implements Flag {
 		tabbedPane.setBackground(Color.white);
 		tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		// 创建整个好友列表
-
 		createScrollPanel(tabbedPane, Flag.FRIENDPANE);
 		createScrollPanel(tabbedPane, Flag.GROUPPANE);
 		createScrollPanel(tabbedPane, Flag.MESSAGE);
@@ -422,8 +421,6 @@ class ClientWindow extends JFrame implements Flag {
 		private String TargetId = "";
 		private String TargetName = "";
 		private int sign;
-		private JLabel nameArea;
-		private JLabel pictureArea;
 		private JLabel recentTextArea;
 		private JLabel timeArea;
 
@@ -471,10 +468,10 @@ class ClientWindow extends JFrame implements Flag {
 				recentTextArea = new JLabel();
 				timeArea = new JLabel();
 				// 名字的控件
-				nameArea = new JLabel(TargetName);
+				JLabel nameArea = new JLabel(TargetName);
 				nameArea.setHorizontalAlignment(JLabel.LEFT);
 				// 头像的控件
-				pictureArea = new JLabel();
+				JLabel pictureArea = new JLabel();
 				BufferedImage bi;
 				File imageFile = null;
 				if (sign == Flag.FRIENDPANE) {
@@ -624,45 +621,43 @@ class ClientWindow extends JFrame implements Flag {
 									// 写入用户主窗口
 								}
 						// 收到请求加好友的信息
-						case ADDFRIEND -> {// A加B好友：A|B
-							MsgList.add(new MsgPanel(new MsgPack(ADDFRIEND, message.split("\\|")[0], message)) {
+						case ADDFRIEND -> // A加B好友：A|B
+								MsgList.add(new MsgPanel(new MsgPack(ADDFRIEND, message.split("\\|")[0], message)) {
 
-								@Override String getMsgString(MsgPack mp) {
-									String str = mp.TargetName + " 向你发来好友申请";
-									return str;
-								}
+									@Override String getMsgString(MsgPack mp) {
+										String str = mp.TargetName + " 向你发来好友申请";
+										return str;
+									}
 
-								@Override void Send(String IsAccept) {
-									hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
-											mp.MsgString + "|" + IsAccept));
-									if (IsAccept.equals("Accept")) {
-										File file = new File(filePath, "/friendList.txt");
-										if (!file.exists()) {
+									@Override void Send(String IsAccept) {
+										hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
+												mp.MsgString + "|" + IsAccept));
+										if (IsAccept.equals("Accept")) {
+											File file = new File(filePath, "/friendList.txt");
+											if (!file.exists()) {
+												try {
+													file.createNewFile();
+												} catch (IOException e) {
+													e.printStackTrace();
+												}
+											}
+											PrintWriter pw;
 											try {
-												file.createNewFile();
-											} catch (IOException e) {
+												pw = new PrintWriter(new FileOutputStream(file, true));
+												pw.println(mp.MsgString.split("\\|")[0]);
+												pw.close();
+											} catch (FileNotFoundException e) {
 												e.printStackTrace();
 											}
+											FriendList.add(new ChatPanel(mp.MsgString.split("\\|")[0],
+													mp.MsgString.split("\\|")[0], Flag.FRIENDPANE));
+											FriendList.repaint();
+											FriendList.revalidate();
 										}
-										PrintWriter pw;
-										try {
-											pw = new PrintWriter(new FileOutputStream(file, true));
-											pw.println(mp.MsgString.split("\\|")[0]);
-											pw.close();
-										} catch (FileNotFoundException e) {
-											e.printStackTrace();
-										}
-										FriendList.add(new ChatPanel(mp.MsgString.split("\\|")[0],
-												mp.MsgString.split("\\|")[0], Flag.FRIENDPANE));
-										FriendList.repaint();
-										FriendList.revalidate();
+										MsgList.remove(panel);
 									}
-									MsgList.remove(panel);
-								}
 
-							});
-
-						}
+								});
 						// 收到同意加好友的信息
 						case ACCEPTFRIEND -> {// A加B好友：A|B|Accept/Refuse
 							String[] split = message.split("\\|");
@@ -844,6 +839,7 @@ class ClientWindow extends JFrame implements Flag {
 		}
 
 	}
+
 	// 最近消息重新排序
 	private void sortRecentPane(ChatPanel chatPanel) {
 		RecentList.remove(chatPanel);

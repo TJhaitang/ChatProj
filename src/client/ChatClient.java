@@ -41,14 +41,6 @@ class Login extends JFrame implements Flag {
 
 	private final ServerConnection s;
 
-	private JPanel usernamePanel = new JPanel();
-	private JPanel passwordPanel = new JPanel();
-	private JPanel buttonPanel = new JPanel();
-	private JPanel textPanel = new JPanel();
-	private JLabel label1 = new JLabel("username");
-	private JLabel label2 = new JLabel("password");
-	private JButton loginButton = new JButton("登录");
-	private JButton SigninButton = new JButton("注册");
 	private final JTextArea usernameTextArea = new JTextArea("admin");
 	private final JPasswordField passwordField = new JPasswordField("123456");
 
@@ -146,19 +138,25 @@ class Login extends JFrame implements Flag {
 		this.lg = this;
 
 		this.setLayout(new BorderLayout());
+		JLabel label1 = new JLabel("username");
+		JPanel usernamePanel = new JPanel();
 		usernamePanel.add(label1);
 		usernameTextArea.setColumns(10);
 		usernamePanel.add(usernameTextArea);
 
+		JLabel label2 = new JLabel("password");
+		JPanel passwordPanel = new JPanel();
 		passwordPanel.add(label2);
 		passwordField.setColumns(10);
 		passwordPanel.add(passwordField);
 
+		JPanel textPanel = new JPanel();
 		textPanel.setLayout(new FlowLayout());
 		textPanel.add(usernamePanel);
 		textPanel.add(passwordPanel);
 		textPanel.setSize(100, 50);
 
+		JButton loginButton = new JButton("登录");
 		loginButton.addActionListener(e->
 		{
 
@@ -179,7 +177,8 @@ class Login extends JFrame implements Flag {
 			new Thread(messenger).start();
 		});
 
-		SigninButton.addActionListener(e->
+		JButton signinButton = new JButton("注册");
+		signinButton.addActionListener(e->
 		{
 			if (IsSending == 1) {
 				return;
@@ -248,8 +247,9 @@ class Login extends JFrame implements Flag {
 			}
 		});
 
+		JPanel buttonPanel = new JPanel();
 		buttonPanel.add(loginButton);
-		buttonPanel.add(SigninButton);
+		buttonPanel.add(signinButton);
 
 		this.add(textPanel, BorderLayout.CENTER);
 		this.add(buttonPanel, BorderLayout.SOUTH);

@@ -141,8 +141,7 @@ public class ChatServer {
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			}
-			byte[] resultBytes = md5.digest();
-			return resultBytes;
+			return md5.digest();
 		}
 
 		private void CreateNewUser(File f) {// 新建用户的文件格式在这里声明，目前已有userinfo
@@ -195,7 +194,6 @@ public class ChatServer {
 		private class Receiver implements Runnable {
 
 			@Override public void run() {
-				String path;
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					try {
 						int sign = t.getMsgFromClient().readInt();
@@ -259,8 +257,8 @@ public class ChatServer {
 					e.printStackTrace();
 				}
 				try {
-					pw = new PrintWriter(new FileOutputStream(new File(
-							System.getProperty("user.dir") + "/src/server/users/" + t.getUsername() + "/groupList.txt"),
+					pw = new PrintWriter(new FileOutputStream(
+							System.getProperty("user.dir") + "/src/server/users/" + t.getUsername() + "/groupList.txt",
 							true));
 					pw.println(mp.MsgString.split("\\|")[1] + "\n" + mp.MsgString.split("\\|")[2]);
 					pw.close();
@@ -297,18 +295,18 @@ public class ChatServer {
 				SendMsgToUser(new MsgPack(Flag.CREATEGROUP, t.getUsername(),
 						t.getUsername() + "|" + groupId + "|" + groupName));
 				try {
-					pw = new PrintWriter(new FileOutputStream(new File(
-							System.getProperty("user.dir") + "/src/server/users/" + t.getUsername() + "/groupList.txt"),
+					pw = new PrintWriter(new FileOutputStream(
+							System.getProperty("user.dir") + "/src/server/users/" + t.getUsername() + "/groupList.txt",
 							true));
 					pw.println(mp.MsgString.split("\\|")[1] + "\n" + mp.MsgString.split("\\|")[2]);
 					pw.close();
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 				}
-				for (int i = 0; i < users.length; i++) {
-					if (!users[i].equals(t.getUsername())) {
-						SendMsgToUser(new MsgPack(Flag.CREATEGROUP, users[i],
-								t.getUsername() + "|" + groupId + "|" + groupName));
+				for (String user : users) {
+					if (!user.equals(t.getUsername())) {
+						SendMsgToUser(
+								new MsgPack(Flag.CREATEGROUP, user, t.getUsername() + "|" + groupId + "|" + groupName));
 					}
 				}
 			}
@@ -338,9 +336,9 @@ public class ChatServer {
 
 			private void AddFriend(MsgPack mp) {// 这里没判断是否有这个好友
 				String[] users = mp.TargetName.split("\\|");
-				for (int i = 0; i < users.length; i++) {
-					if (!users[i].equals(t.getUsername())) {
-						SendMsgToUser(new MsgPack(Flag.ADDFRIEND, users[i], t.getUsername() + "|" + users[i]));
+				for (String user : users) {
+					if (!user.equals(t.getUsername())) {
+						SendMsgToUser(new MsgPack(Flag.ADDFRIEND, user, t.getUsername() + "|" + user));
 					}
 				}
 			}
@@ -363,8 +361,6 @@ public class ChatServer {
 							}
 						}
 						br.close();
-					} catch (FileNotFoundException e) {
-						e.printStackTrace();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -415,8 +411,7 @@ public class ChatServer {
 							t.getMsgToClient().writeInt(mp.flag);
 							t.getMsgToClient().writeUTF(mp.TargetName);
 							t.getMsgToClient().writeUTF(mp.MsgString);// 失败后写文件(吗？)
-							switch (mp.flag) {
-							case Flag.ACCEPTFRIEND: {
+							if (mp.flag == Flag.ACCEPTFRIEND) {
 								if (mp.MsgString.split("\\|")[2].equals("Accept")) {
 									File file = new File(filePath, "/friendList.txt");
 									if (!file.exists()) {
@@ -435,10 +430,6 @@ public class ChatServer {
 										e.printStackTrace();
 									}
 								}
-								break;
-							}
-							default:
-								break;
 							}
 						} catch (IOException e) {// 写文件
 							AddMsgToFile(t.getUsername(), mp);
@@ -491,7 +482,7 @@ public class ChatServer {
 }
 
 class TargetConnection {// 建立一个类用以存放与用户的连接
-	private Socket MsgSocket;
+	private final Socket MsgSocket;
 	private Socket FileSocket;
 	private String username;
 	private DataInputStream msgFromClient;
