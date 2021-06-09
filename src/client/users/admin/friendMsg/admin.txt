@@ -44,3 +44,5 @@
 2021-06-09 17:35:05|admin|0|1|TEXT|admin
 2021-06-09 17:57:19|admin|0|1|TEXT|admin
 2021-06-09 17:57:19|admin|0|1|TEXT|admin
+2021-06-10 00:22:34|admin|0|C:\Users\nieyuzhou\Documents\Rplot06.png|IMG|admin
+2021-06-10 00:22:34|admin|0|C:\Users\nieyuzhou\Documents\Rplot08.png|IMG|admin
