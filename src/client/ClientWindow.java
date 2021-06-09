@@ -253,7 +253,7 @@ class ClientWindow extends JFrame implements Flag {
 		public JTextField textField = new JTextField();
 		private JLabel UserName;
 		private JLabel pictureArea;
-		private JPanel panel = this;
+		private final JPanel panel = this;
 
 		UserPanel() {
 			this.setLayout(null);
@@ -473,10 +473,10 @@ class ClientWindow extends JFrame implements Flag {
 				// 头像的控件
 				JLabel pictureArea = new JLabel();
 				BufferedImage bi;
-				File imageFile = null;
+				File imageFile;
 				if (sign == Flag.FRIENDPANE) {
 					imageFile = new File(myPath + "/friendIcon/" + id + ".jpg");
-				} else if (sign == Flag.GROUPPANE) {
+				} else {
 					imageFile = new File(myPath + "/groupIcon/" + id + ".jpg");
 				}
 				if (!imageFile.exists()) {
@@ -526,11 +526,17 @@ class ClientWindow extends JFrame implements Flag {
 				recentTextArea.setText("");
 				timeArea.setText("");
 			} else {
-				// System.out.println("****\n" + lastLine + "\n****");
-				recentTextArea.setText(lastLine.split("\\|")[1] + ":" + lastLine.split("\\|")[3]);
+				String[] split = lastLine.split("\\|");
+				if ("IMG".equals(split[4])) {
+					recentTextArea.setText(split[1] + ": " + "[图片]");
+				} else if ("FILE".equals(split[4])) {
+					recentTextArea.setText(split[1] + ": " + "[文件]");
+				} else {
+					recentTextArea.setText(split[1] + ": " + split[3]);
+				}
 				// 最近一条消息时间的控件
 				// 怎么修改时间格式？
-				timeArea.setText(lastLine.split("\\|")[0]);
+				timeArea.setText(split[0]);
 			}
 		}
 	}
@@ -538,7 +544,7 @@ class ClientWindow extends JFrame implements Flag {
 	public class HandleASession {
 		private final File filePath;// 在这里实现信息交互
 		ServerConnection s;
-		Reciever reciever = new Reciever();
+		Receiver receiver = new Receiver();
 		Sender sender = new Sender();
 		Queue<MsgPack> MsgQueue = new LinkedList<>();
 		int go = 1;
@@ -549,7 +555,7 @@ class ClientWindow extends JFrame implements Flag {
 
 		HandleASession(ServerConnection s) {
 			this.s = s;
-			new Thread(reciever).start();
+			new Thread(receiver).start();
 			new Thread(sender).start();
 			filePath = new File(System.getProperty("user.dir") + "/src/client/users/" + s.getSelfName());
 		}
@@ -574,7 +580,8 @@ class ClientWindow extends JFrame implements Flag {
 		// }
 		// }
 
-		private class Reciever implements Runnable {
+		private class Receiver implements Runnable {
+			String path = System.getProperty("user.dir") + "/src/client/users/";
 
 			@Override public void run() {
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
@@ -586,14 +593,17 @@ class ClientWindow extends JFrame implements Flag {
 						message = s.getMsgFromServer().readUTF();
 						switch (sign) {
 						case SENDFILE -> {
+							String name = message.split("\\|")[3];
+							name = name.substring(name.lastIndexOf("\\"));
+							s.receiveFile(path + tar + "/cache/" + name);
 						}
 						case SENDTEXT -> // 先实现这部分功能尝试一下运行
 								{
 									String[] split = message.split("\\|");
+									if (chatWindows.containsKey(split[1]) && !split[1].equals(split[5])) {
+										chatWindows.get(split[1]).AddMessage(message);
+									}
 									if (split[5].toCharArray()[0] != 'G') {// 若为已打开窗口则写入窗口中
-										if (chatWindows.containsKey(split[1])) {
-											chatWindows.get(split[1]).AddMessage(message);
-										}
 										// 写入本地文件
 										File chatRecord = new File(s.getParentFile(),
 												s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
@@ -604,9 +614,6 @@ class ClientWindow extends JFrame implements Flag {
 										sortRecentPane(cw.chatPanels2.get(split[5]));
 										pw.close();
 									} else {
-										if (chatWindows.containsKey(split[5])) {
-											chatWindows.get(split[5]).AddMessage(message);
-										}
 										// 写入本地文件
 										File chatRecord = new File(s.getParentFile(),
 												s.getSelfName() + "/groupMsg/" + split[5] + ".txt");
@@ -792,8 +799,7 @@ class ClientWindow extends JFrame implements Flag {
 						MsgPack mp = MsgQueue.poll();
 						switch (mp.flag) {
 						case Flag.SENDTEXT -> SendText(mp);
-						case Flag.SENDFILE -> {
-						}
+						case Flag.SENDFILE -> sendFile(mp);
 						default -> {
 							try {
 								s.getMsgToServer().writeInt(mp.flag);
@@ -805,6 +811,19 @@ class ClientWindow extends JFrame implements Flag {
 						}
 						}
 					}
+				}
+			}
+
+			private void sendFile(MsgPack mp) {
+				try {
+					s.getMsgToServer().writeInt(mp.flag);
+					s.getMsgToServer().writeUTF(mp.TargetName);
+					s.getMsgToServer().writeUTF(mp.MsgString);
+					s.uploadFile(mp.MsgString.split("\\|")[3]);
+					// 也要发文件
+					SendText(mp);
+				} catch (IOException e) {
+					System.out.println("错误");
 				}
 			}
 

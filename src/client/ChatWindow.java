@@ -1,6 +1,7 @@
 package client;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -8,10 +9,10 @@ import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.WindowEvent;
 import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 // 私聊 创建好友聊天界面，将本地聊天数据读取到这里，按照时间顺序制作窗口
 abstract class ChatWindow extends JFrame implements Flag {
@@ -29,6 +30,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 	protected JPanel buttonPanel_side = new JPanel();
 	protected JButton imageButton = new JButton("图\n片");
 	protected JButton fileButton = new JButton("文\n件");
+	JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView());
 
 	protected ServerConnection s;
 	protected String TargetId;
@@ -50,6 +52,24 @@ abstract class ChatWindow extends JFrame implements Flag {
 		buttonPanel_side.add(imageButton);
 		fileButton.setSize(30, 20);
 		fileButton.setMargin(new Insets(0, 0, 0, 0));
+		// 文件发送
+		fileButton.addActionListener(e->
+		{
+			fileChooser.setMultiSelectionEnabled(true);
+			int result = fileChooser.showOpenDialog(this);
+			if (result == JFileChooser.APPROVE_OPTION) {
+				File[] selectedFiles = fileChooser.getSelectedFiles();
+				for (File selectedFile : selectedFiles) {
+					Sender sender;
+					if (MyUtil.isImage(selectedFile)) {
+						sender = new Sender(selectedFile, TargetId, true);
+					} else {
+						sender = new Sender(selectedFile, TargetId, false);
+					}
+					new Thread(sender).start();
+				}
+			}
+		});
 		buttonPanel_side.add(fileButton);
 		buttonPanel_side.setBounds(0, 0, 30, 455);
 
@@ -70,23 +90,19 @@ abstract class ChatWindow extends JFrame implements Flag {
 		TextBox.setBounds(30, 355, 620, 100);
 		this.add(TextBox);
 
-		sendButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String text = Text.getText();
-				if (text == null || text.equals("")) {
-					return;
-				}
-				Sender sender = new Sender(Text.getText(), TargetId);
-				Text.setText("");
-				new Thread(sender).start();
+		sendButton.addActionListener(e->
+		{
+			String text = Text.getText();
+			if (text == null || text.equals("")) {
+				return;
 			}
+			Sender sender = new Sender(Text.getText(), TargetId);
+			Text.setText("");
+			new Thread(sender).start();
 		});
-		voiceButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// -//发消息
-			}
+		voiceButton.addActionListener(e->
+		{
+			// -//发消息
 		});
 		sendButton.setMargin(new Insets(0, 0, 0, 0));
 		voiceButton.setMargin(new Insets(0, 0, 0, 0));
@@ -100,8 +116,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 		this.add(buttonPanel_text);
 
 		this.addComponentListener(new ComponentAdapter() {// 动态调整窗口大小
-			@Override
-			public void componentResized(ComponentEvent e) {
+			@Override public void componentResized(ComponentEvent e) {
 				int width = getContentPane().getWidth();
 				int height = getContentPane().getHeight();
 				buttonPanel_side.setBounds(0, 0, 30, height);
@@ -129,14 +144,16 @@ abstract class ChatWindow extends JFrame implements Flag {
 		} else {// 别人发的
 			StyleConstants.setAlignment(attr, StyleConstants.ALIGN_LEFT);
 		}
-		if (ss[4].equals("TEXT")) {
-			StyledDocument document = (StyledDocument) MsgLabel.getDocument();
+		StyledDocument document = (StyledDocument) MsgLabel.getDocument();
+		switch (ss[4]) {
+		case "TEXT":
+
 			try {
 				StyleConstants.setForeground(attr, Color.black);
 				MsgLabel.setParagraphAttributes(attr, false);
 				document.insertString(document.getLength(), name + " " + ss[0] + "\n", null);
 				if (true) {
-					;
+
 				}
 				StyleConstants.setForeground(attr, Color.gray);
 				MsgLabel.setParagraphAttributes(attr, false);
@@ -147,9 +164,9 @@ abstract class ChatWindow extends JFrame implements Flag {
 			} catch (BadLocationException e) {
 				e.printStackTrace();
 			}
-		} else if (ss[4].equals("IMG")) {
+			break;
+		case "IMG":
 			try {
-				StyledDocument document = (StyledDocument) MsgLabel.getDocument();
 				StyleConstants.setForeground(attr, Color.gray);
 				MsgLabel.setParagraphAttributes(attr, false);
 				document.insertString(document.getLength(), name + " " + ss[0] + "\n", null);
@@ -160,13 +177,17 @@ abstract class ChatWindow extends JFrame implements Flag {
 				// HTML.Tag.HTML);
 				// System.out.println(MsgLabel.getCaretPosition());
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-				ImageIcon img = new ImageIcon(s.getParentFile().getParent() + "/image/" + ss[3]);
+				ImageIcon img = new ImageIcon(ss[3]);
 				MsgLabel.insertIcon(ResizeImg(img));
 				document.insertString(document.getLength(), "\n ", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
 			} catch (BadLocationException e) {
 				e.printStackTrace();
 			}
+			break;
+		case "FILE":
+
+			break;
 		}
 	}
 
@@ -186,8 +207,12 @@ abstract class ChatWindow extends JFrame implements Flag {
 
 	abstract void display();// 从历史记录中读取
 
-	protected void sendMsg(String s) {// 发信，与服务器做交互
-		cw.hand.PutMsg(new MsgPack(Flag.SENDTEXT, TargetId, s));
+	protected void sendMsg(String s, int flag) {// 发信，与服务器做交互
+		if (flag == Flag.SENDTEXT) {
+			cw.hand.PutMsg(new MsgPack(Flag.SENDTEXT, TargetId, s));
+		} else {
+			cw.hand.PutMsg(new MsgPack(Flag.SENDFILE, TargetId, s));
+		}
 	}
 
 	// 不能删，不然就关闭全部窗口了
@@ -204,6 +229,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 	// 发信工具类，收信类放到用户界面内
 	private class Sender implements Runnable {
 		String str;
+		File file = null;
+		boolean isImage;
 
 		Sender(String str1, String Tar) {
 			str = str1.replaceAll("\\|", "</or>");//
@@ -211,10 +238,25 @@ abstract class ChatWindow extends JFrame implements Flag {
 			str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + str + "|TEXT|" + Tar;
 		}
 
-		@Override
-		public void run() {
+		Sender(File file, String Tar, boolean flag) {
+			this.file = file;
+			isImage = flag;
+			if (isImage) {
+				str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + file.getAbsolutePath()
+						+ "|IMG|" + Tar;
+			} else {
+				str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + file.getAbsolutePath()
+						+ "|FILE|" + Tar;
+			}
+		}
+
+		@Override public void run() {
 			AddMessage(str);
-			sendMsg(str);
+			if (file != null) {
+				sendMsg(str, Flag.SENDFILE);
+			} else {
+				sendMsg(str, Flag.SENDTEXT);
+			}
 		}
 
 	}
@@ -231,9 +273,9 @@ class GroupWindow extends ChatWindow {
 		this.setVisible(true);
 	}
 
-	@Override
-	void display() {
-		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+	@Override void display() {
+		File chatRecord = new File(s.getParentFile(),
+				s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		if (!chatRecord.exists()) {
 			try {
 				chatRecord.createNewFile();
@@ -277,10 +319,10 @@ class FriendWindow extends ChatWindow {
 		this.setVisible(true);
 	}
 
-	@Override
-	void display() {
+	@Override void display() {
 		// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
-		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+		File chatRecord = new File(s.getParentFile(),
+				s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		if (!chatRecord.exists()) {
 			try {
 				chatRecord.createNewFile();

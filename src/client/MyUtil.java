@@ -90,6 +90,7 @@ public class MyUtil {
 		}
 		return null;
 	}
+
 	// 外界使用的
 	public static BufferedImage setRadius(BufferedImage srcImage) {
 		int radius = (srcImage.getWidth() + srcImage.getHeight()) / 6;
@@ -130,5 +131,18 @@ public class MyUtil {
 		gs.drawImage(srcImage, 0, 0, null);
 		gs.dispose();
 		return image;
+	}
+
+	static String[] imageArray = { "bmp", "dib", "gif", "jfif", "jpe", "jpeg", "jpg", "png", "tif", "tiff", "ico" };
+
+	public static Boolean isImage(File srcFilePath) {
+		String input = srcFilePath.getName();
+		String tmpName = input.substring(input.lastIndexOf(".") + 1, input.length());
+		for (String string : imageArray) {
+			if (string.equals(tmpName)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

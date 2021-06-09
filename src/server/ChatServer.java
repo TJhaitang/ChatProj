@@ -192,6 +192,7 @@ public class ChatServer {
 		}
 
 		private class Receiver implements Runnable {
+			final String path = System.getProperty("user.dir") + "/src/server/users/";
 
 			@Override public void run() {
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
@@ -206,6 +207,7 @@ public class ChatServer {
 							break;
 						}
 						case Flag.SENDFILE:/* 往下先等等 */ {
+							readAndSendFile(mp);
 							break;
 						}
 						case Flag.ADDFRIEND: {
@@ -236,6 +238,22 @@ public class ChatServer {
 						return;
 					}
 				}
+			}
+
+			private void readAndSendFile(MsgPack mp) {
+				try {
+					String name = mp.MsgString.split("\\|")[3];
+					name = name.substring(name.lastIndexOf("\\"));
+					t.receiveFile(path + mp.TargetName + "/cache/" + name);
+					t.getMsgToClient().writeInt(Flag.SENDFILE);
+					t.getMsgToClient().writeUTF(mp.TargetName);
+					t.getMsgToClient().writeUTF(mp.MsgString);
+					t.sendFile(path + mp.TargetName + "/cache/" + name);
+					new File(path + mp.TargetName + "/cache/" + name).delete();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
 			}
 
 			private void AcceptGroup(MsgPack mp) {
