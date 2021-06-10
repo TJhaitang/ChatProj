@@ -16,9 +16,13 @@ public class ChatClient {
 	}
 
 	ChatClient() {
+//		int port = 24705;
+//		String address = "5.180.76.28";
+		int port = 8888;
+		String address = "localhost";
 		try {
-			MsgSocket = new Socket("localhost", 8888);// 建立连接
-			FileSocket = new Socket("localhost", 8888);
+			MsgSocket = new Socket(address, port);// 建立连接
+			FileSocket = new Socket(address, port);
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
 			System.exit(0);
@@ -63,8 +67,7 @@ class Login extends JFrame implements Flag {
 			s.setSelfName(username);
 			ClientWindow clientWindow = new ClientWindow(s);
 			clientWindow.addWindowListener(new WindowAdapter() {
-				@Override
-				public void windowClosing(WindowEvent e) {
+				@Override public void windowClosing(WindowEvent e) {
 					System.exit(0);
 				}
 			});
@@ -76,8 +79,7 @@ class Login extends JFrame implements Flag {
 			return true;
 		}
 
-		@Override
-		public void run() {
+		@Override public void run() {
 			IsSending = 1;
 			try {
 				s.getMsgToServer().writeUTF(username);
@@ -197,8 +199,7 @@ class Login extends JFrame implements Flag {
 		});
 
 		usernameTextArea.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
+			@Override public void keyPressed(KeyEvent e) {
 				super.keyPressed(e);
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					if (IsSending == 1) {
@@ -223,8 +224,7 @@ class Login extends JFrame implements Flag {
 		});
 
 		passwordField.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
+			@Override public void keyPressed(KeyEvent e) {
 				super.keyPressed(e);
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					if (IsSending == 1) {
