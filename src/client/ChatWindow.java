@@ -68,7 +68,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 					}
 					new Thread(sender).start();
 					try {
-						Thread.sleep(200);
+						Thread.sleep(150);
 					} catch (InterruptedException interruptedException) {
 						interruptedException.printStackTrace();
 					}

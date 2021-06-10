@@ -242,8 +242,11 @@ public class ChatServer {
 
 			private void readAndSendFile(MsgPack mp) {
 				try {
-					String name = mp.MsgString.split("\\|")[3];
+					String[] split = mp.MsgString.split("\\|");
+					String name = split[3];
 					name = name.substring(name.lastIndexOf("\\"));
+					mp.MsgString =
+							split[0] + "|" + split[1] + "|" + split[2] + "|" + name + "|" + split[4] + "|" + split[5];
 					t.receiveFile(path + mp.TargetName + "/cache/" + name);
 					t.getMsgToClient().writeInt(Flag.SENDFILE);
 					t.getMsgToClient().writeUTF(mp.TargetName);

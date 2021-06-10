@@ -15,9 +15,13 @@ public class ChatClient {
 	}
 
 	ChatClient() {
+//		int port =24705;
+//		String address = "5.180.76.28";
+		int port =8888;
+		String address = "localhost";
 		try {
-			MsgSocket = new Socket("localhost", 8888);// 建立连接
-			FileSocket = new Socket("localhost", 8888);
+			MsgSocket = new Socket(address, port);// 建立连接
+			FileSocket = new Socket(address, port);
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
 			System.exit(0);

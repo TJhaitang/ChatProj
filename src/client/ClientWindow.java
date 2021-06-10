@@ -511,7 +511,13 @@ class ClientWindow extends JFrame implements Flag {
 
 		public void updateRecentMsg(int sign, String updateLine) {
 			if (!updateLine.equals("")) {
-				recentTextArea.setText(updateLine.split("\\|")[1] + ":" + updateLine.split("\\|")[3]);
+				if ("IMG".equals(updateLine.split("\\|")[4])) {
+					recentTextArea.setText(updateLine.split("\\|")[1] + ": " + "[图片]");
+				} else if ("FILE".equals(updateLine.split("\\|")[4])) {
+					recentTextArea.setText(updateLine.split("\\|")[1] + ": " + "[文件]");
+				} else {
+					recentTextArea.setText(updateLine.split("\\|")[1] + ": " + updateLine.split("\\|")[3]);
+				}
 				timeArea.setText(updateLine.split("\\|")[0]);
 				return;
 			}
@@ -592,81 +598,87 @@ class ClientWindow extends JFrame implements Flag {
 						tar = s.getMsgFromServer().readUTF();
 						message = s.getMsgFromServer().readUTF();
 						switch (sign) {
-						case SENDFILE -> {
+						case SENDFILE: {
 							String name = message.split("\\|")[3];
-							name = name.substring(name.lastIndexOf("\\"));
 							s.receiveFile(path + tar + "/cache/" + name);
+							if (message.split("\\|")[1].equals(message.split("\\|")[5])) {
+								break;
+							}
 						}
-						case SENDTEXT -> // 先实现这部分功能尝试一下运行
-								{
-									String[] split = message.split("\\|");
-									if (chatWindows.containsKey(split[1]) && !split[1].equals(split[5])) {
-										chatWindows.get(split[1]).AddMessage(message);
-									}
-									if (split[5].toCharArray()[0] != 'G') {// 若为已打开窗口则写入窗口中
-										// 写入本地文件
-										File chatRecord = new File(s.getParentFile(),
-												s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
-										PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-										pw.println(message);
-										cw.chatPanels.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
-										cw.chatPanels2.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
-										sortRecentPane(cw.chatPanels2.get(split[5]));
-										pw.close();
-									} else {
-										// 写入本地文件
-										File chatRecord = new File(s.getParentFile(),
-												s.getSelfName() + "/groupMsg/" + split[5] + ".txt");
-										PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
-										cw.chatPanels.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
-										cw.chatPanels2.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
-										sortRecentPane(cw.chatPanels2.get(split[5]));
-										pw.println(message);
-										pw.close();
-									}
+						case SENDTEXT:// 先实现这部分功能尝试一下运行
+						{
+							String[] split = message.split("\\|");
+							if (chatWindows.containsKey(split[1]) && !split[1].equals(split[5])) {
+								chatWindows.get(split[1]).AddMessage(message);
+							}
+							if (split[5].toCharArray()[0] != 'G') {// 若为已打开窗口则写入窗口中
+								// 写入本地文件
+								File chatRecord = new File(s.getParentFile(),
+										s.getSelfName() + "/friendMsg/" + split[1] + ".txt");
+								PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+								pw.println(message);
+								cw.chatPanels.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
+								cw.chatPanels2.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
+								sortRecentPane(cw.chatPanels2.get(split[5]));
+								pw.close();
+							} else {
+								// 写入本地文件
+								File chatRecord = new File(s.getParentFile(),
+										s.getSelfName() + "/groupMsg/" + split[5] + ".txt");
+								PrintWriter pw = new PrintWriter(new FileOutputStream(chatRecord, true));
+								cw.chatPanels.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
+								cw.chatPanels2.get(split[5]).updateRecentMsg(Flag.GROUPPANE, message);
+								sortRecentPane(cw.chatPanels2.get(split[5]));
+								pw.println(message);
+								pw.close();
+							}
 
-									// 写入用户主窗口
-								}
+							// 写入用户主窗口
+							break;
+						}
 						// 收到请求加好友的信息
-						case ADDFRIEND -> // A加B好友：A|B
-								MsgList.add(new MsgPanel(new MsgPack(ADDFRIEND, message.split("\\|")[0], message)) {
+						case ADDFRIEND:// A加B好友：A|B
+						{
+							MsgList.add(new MsgPanel(new MsgPack(ADDFRIEND, message.split("\\|")[0], message)) {
 
-									@Override String getMsgString(MsgPack mp) {
-										String str = mp.TargetName + " 向你发来好友申请";
-										return str;
-									}
+								@Override String getMsgString(MsgPack mp) {
+									String str = mp.TargetName + " 向你发来好友申请";
+									return str;
+								}
 
-									@Override void Send(String IsAccept) {
-										hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
-												mp.MsgString + "|" + IsAccept));
-										if (IsAccept.equals("Accept")) {
-											File file = new File(filePath, "/friendList.txt");
-											if (!file.exists()) {
-												try {
-													file.createNewFile();
-												} catch (IOException e) {
-													e.printStackTrace();
-												}
-											}
-											PrintWriter pw;
+								@Override void Send(String IsAccept) {
+									hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
+											mp.MsgString + "|" + IsAccept));
+									if (IsAccept.equals("Accept")) {
+										File file = new File(filePath, "/friendList.txt");
+										if (!file.exists()) {
 											try {
-												pw = new PrintWriter(new FileOutputStream(file, true));
-												pw.println(mp.MsgString.split("\\|")[0]);
-												pw.close();
-											} catch (FileNotFoundException e) {
+												file.createNewFile();
+											} catch (IOException e) {
 												e.printStackTrace();
 											}
-											FriendList.add(new ChatPanel(mp.MsgString.split("\\|")[0],
-													mp.MsgString.split("\\|")[0], Flag.FRIENDPANE));
-											FriendList.repaint();
-											FriendList.revalidate();
 										}
-										MsgList.remove(panel);
+										PrintWriter pw;
+										try {
+											pw = new PrintWriter(new FileOutputStream(file, true));
+											pw.println(mp.MsgString.split("\\|")[0]);
+											pw.close();
+										} catch (FileNotFoundException e) {
+											e.printStackTrace();
+										}
+										FriendList.add(new ChatPanel(mp.MsgString.split("\\|")[0],
+												mp.MsgString.split("\\|")[0], Flag.FRIENDPANE));
+										FriendList.repaint();
+										FriendList.revalidate();
 									}
+									MsgList.remove(panel);
+								}
 
-								});
-						// 收到同意加好友的信息
-						case ACCEPTFRIEND -> {// A加B好友：A|B|Accept/Refuse
+							});
+							break;
+							// 收到同意加好友的信息
+						}
+						case ACCEPTFRIEND: {// A加B好友：A|B|Accept/Refuse
 							String[] split = message.split("\\|");
 							if (split[2].equals("Accept")) {
 								File file = new File(filePath, "/friendList.txt");
@@ -690,8 +702,9 @@ class ClientWindow extends JFrame implements Flag {
 							} else if (split[2].equals("Refuse")) {
 								addMessage(split[1] + "拒绝了你的好友请求");
 							}
+							break;
 						}
-						case CREATEGROUP -> {// A建群:A|ID|name
+						case CREATEGROUP: {// A建群:A|ID|name
 							String creater = message.split("\\|")[0];
 							if (creater.equals(s.getSelfName())) {// 我套我这里写的时候是没睡醒么我写的是个啥啊
 								addMessage("建群成功！群ID为: " + message.split("\\|")[1]);
@@ -768,15 +781,16 @@ class ClientWindow extends JFrame implements Flag {
 
 								});
 							}
+							break;
 						}
-						case DELETEFRIEND -> {// A删除自己:A
-
+						case DELETEFRIEND: {// A删除自己:A
+							break;
 						}
-						case DELETEGROUP -> {// A删群：ID
-
+						case DELETEGROUP: {// A删群：ID
+							break;
 						}
-						case QUITGROUP -> {// A退出群：ID|A
-
+						case QUITGROUP: {// A退出群：ID|A
+							break;
 						}
 						}
 					} catch (IOException e) {
@@ -815,16 +829,8 @@ class ClientWindow extends JFrame implements Flag {
 			}
 
 			private void sendFile(MsgPack mp) {
-				try {
-					s.getMsgToServer().writeInt(mp.flag);
-					s.getMsgToServer().writeUTF(mp.TargetName);
-					s.getMsgToServer().writeUTF(mp.MsgString);
-					s.uploadFile(mp.MsgString.split("\\|")[3]);
-					// 也要发文件
-					SendText(mp);
-				} catch (IOException e) {
-					System.out.println("错误");
-				}
+				SendText(mp);
+				s.uploadFile(mp.MsgString.split("\\|")[3]);
 			}
 
 			private void SendText(MsgPack mp) {
