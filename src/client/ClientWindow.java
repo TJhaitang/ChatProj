@@ -147,39 +147,6 @@ class ClientWindow extends JFrame implements Flag {
 		// 设置滚轮速度(默认的太慢了)
 		scrollPane.getVerticalScrollBar().setUnitIncrement(13);
 		tabbedPane.addTab("消息列表", paneIcon, scrollPane, "这里是你的消息通知列表");
-		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
-			@Override
-			String getMsgString(MsgPack mp) {
-				return "测试";
-			}
-
-			@Override
-			void Send(String IsAccept) {
-				MsgList.remove(panel);
-			}
-		});
-		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
-			@Override
-			String getMsgString(MsgPack mp) {
-				return "测试";
-			}
-
-			@Override
-			void Send(String IsAccept) {
-				MsgList.remove(panel);
-			}
-		});
-		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
-			@Override
-			String getMsgString(MsgPack mp) {
-				return "测试";
-			}
-
-			@Override
-			void Send(String IsAccept) {
-				MsgList.remove(panel);
-			}
-		});
 	}
 
 	private void createPane(JTabbedPane tabbedPane, Icon paneIcon, String list, String title, String tip, int sign) {
