@@ -9,10 +9,10 @@ import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 // 私聊 创建好友聊天界面，将本地聊天数据读取到这里，按照时间顺序制作窗口
 abstract class ChatWindow extends JFrame implements Flag {
@@ -53,8 +53,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 		fileButton.setSize(30, 20);
 		fileButton.setMargin(new Insets(0, 0, 0, 0));
 		// 文件发送
-		fileButton.addActionListener(e->
-		{
+		fileButton.addActionListener(e -> {
 			fileChooser.setMultiSelectionEnabled(true);
 			int result = fileChooser.showOpenDialog(this);
 			if (result == JFileChooser.APPROVE_OPTION) {
@@ -68,7 +67,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 					}
 					new Thread(sender).start();
 					try {
-						Thread.sleep(200);
+						Thread.sleep(100);
 					} catch (InterruptedException interruptedException) {
 						interruptedException.printStackTrace();
 					}
@@ -95,8 +94,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 		TextBox.setBounds(30, 355, 620, 100);
 		this.add(TextBox);
 
-		sendButton.addActionListener(e->
-		{
+		sendButton.addActionListener(e -> {
 			String text = Text.getText();
 			if (text == null || text.equals("")) {
 				return;
@@ -105,8 +103,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 			Text.setText("");
 			new Thread(sender).start();
 		});
-		voiceButton.addActionListener(e->
-		{
+		voiceButton.addActionListener(e -> {
 			// -//发消息
 		});
 		sendButton.setMargin(new Insets(0, 0, 0, 0));
@@ -121,7 +118,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 		this.add(buttonPanel_text);
 
 		this.addComponentListener(new ComponentAdapter() {// 动态调整窗口大小
-			@Override public void componentResized(ComponentEvent e) {
+			@Override
+			public void componentResized(ComponentEvent e) {
 				int width = getContentPane().getWidth();
 				int height = getContentPane().getHeight();
 				buttonPanel_side.setBounds(0, 0, 30, height);
@@ -172,6 +170,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 			break;
 		case "IMG":
 			try {
+				File ImgPath = new File(s.getParentFile(), "/" + s.getSelfName() + "/cache" + ss[3]);
+				// System.out.println(ImgPath.getAbsolutePath());
 				StyleConstants.setForeground(attr, Color.gray);
 				MsgLabel.setParagraphAttributes(attr, false);
 				document.insertString(document.getLength(), name + " " + ss[0] + "\n", null);
@@ -182,17 +182,118 @@ abstract class ChatWindow extends JFrame implements Flag {
 				// HTML.Tag.HTML);
 				// System.out.println(MsgLabel.getCaretPosition());
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
-				ImageIcon img = new ImageIcon(ss[3]);
-				MsgLabel.insertIcon(ResizeImg(img));
+				ImageIcon img = new ImageIcon(ImgPath.getAbsolutePath());
+				img = ResizeImg(img);
+				JLabel imgLabel = new JLabel(img);
+				imgLabel.addMouseListener(new MouseListener() {
+
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						// try {
+						// Desktop.getDesktop().open(new File("D:\\ruc"));
+						// } catch (IOException e1) {
+						// e1.printStackTrace();
+						// }
+						JFrame ImgWindow = new JFrame();
+						ImgWindow.setLayout(new FlowLayout());
+						ImageIcon img = new ImageIcon(ImgPath.getAbsolutePath());
+						JLabel imgLabel = new JLabel(img);
+						ImgWindow.add(imgLabel);
+						// imgLabel.setBounds(0, 0, img.getIconWidth(), img.getIconHeight());
+						ImgWindow.setResizable(false);
+						ImgWindow.setSize(img.getIconWidth(), img.getIconHeight() + 55);
+						Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+						ImgWindow.setLocation((dim.width) / 2, (dim.height) / 2);
+						ImgWindow.setVisible(true);
+					}
+
+					@Override
+					public void mousePressed(MouseEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void mouseReleased(MouseEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void mouseEntered(MouseEvent e) {
+						imgLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+					}
+
+					@Override
+					public void mouseExited(MouseEvent e) {
+						imgLabel.setCursor(Cursor.getDefaultCursor());
+					}
+				});
+				MsgLabel.insertComponent(imgLabel);
 				document.insertString(document.getLength(), "\n ", null);
 				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
 			} catch (BadLocationException e) {
 				e.printStackTrace();
 			}
 			break;
-		case "FILE":
+		case "FILE": {
+			try {
+				File ImgPath = new File(s.getParentFile().getParentFile(), "/system/file.jpg");
+				// System.out.println(ImgPath.getAbsolutePath());
+				StyleConstants.setForeground(attr, Color.gray);
+				MsgLabel.setParagraphAttributes(attr, false);
+				document.insertString(document.getLength(), name + " " + ss[0] + "\n", null);
+				// MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
+				// htmledit.insertHTML(text_html, MsgLabel.getCaretPosition() - 1,
+				// "<img src='file:///" + s.getParentFile().getParent() + "/image/" + ss[3] + "'
+				// >", 0, 0,
+				// HTML.Tag.HTML);
+				// System.out.println(MsgLabel.getCaretPosition());
+				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
+				ImageIcon img = new ImageIcon(ImgPath.getAbsolutePath());
+				img = ResizeImg(img);
+				JLabel imgLabel = new JLabel(img);
+				imgLabel.addMouseListener(new MouseListener() {
 
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						try {
+							Desktop.getDesktop().open(new File(s.getParentFile(), s.getSelfName() + "/cache"));
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+
+					@Override
+					public void mousePressed(MouseEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void mouseReleased(MouseEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void mouseEntered(MouseEvent e) {
+						imgLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+					}
+
+					@Override
+					public void mouseExited(MouseEvent e) {
+						imgLabel.setCursor(Cursor.getDefaultCursor());
+					}
+				});
+				MsgLabel.insertComponent(imgLabel);
+				document.insertString(document.getLength(), "\n ", null);
+				MsgLabel.setCaretPosition(MsgLabel.getDocument().getLength());
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
 			break;
+		}
 		}
 	}
 
@@ -235,6 +336,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 	private class Sender implements Runnable {
 		String str;
 		File file = null;
+		String Tar;
 		boolean isImage;
 
 		Sender(String str1, String Tar) {
@@ -245,23 +347,32 @@ abstract class ChatWindow extends JFrame implements Flag {
 
 		Sender(File file, String Tar, boolean flag) {
 			this.file = file;
+			this.Tar = Tar;
 			isImage = flag;
-			if (isImage) {
-				str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + file.getAbsolutePath()
-						+ "|IMG|" + Tar;
-			} else {
-				str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + file.getAbsolutePath()
-						+ "|FILE|" + Tar;
-			}
 		}
 
-		@Override public void run() {
-			AddMessage(str);
+		@Override
+		public void run() {
 			if (file != null) {
+				String name = file.getAbsolutePath();
+				name = name.substring(name.lastIndexOf("\\"));
+				try {
+					Files.copy(file.toPath(),
+							new File(s.getParentFile(), "/" + s.getSelfName() + "/cache" + name).toPath(),
+							StandardCopyOption.REPLACE_EXISTING);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				if (isImage) {
+					str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + name + "|IMG|" + Tar;
+				} else {
+					str = MyUtil.generateTimeStamp() + "|" + s.getSelfName() + "|" + "0" + "|" + name + "|FILE|" + Tar;
+				}
 				sendMsg(str, Flag.SENDFILE);
 			} else {
 				sendMsg(str, Flag.SENDTEXT);
 			}
+			AddMessage(str);
 		}
 
 	}
@@ -278,9 +389,9 @@ class GroupWindow extends ChatWindow {
 		this.setVisible(true);
 	}
 
-	@Override void display() {
-		File chatRecord = new File(s.getParentFile(),
-				s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+	@Override
+	void display() {
+		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		if (!chatRecord.exists()) {
 			try {
 				chatRecord.createNewFile();
@@ -324,10 +435,10 @@ class FriendWindow extends ChatWindow {
 		this.setVisible(true);
 	}
 
-	@Override void display() {
+	@Override
+	void display() {
 		// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
-		File chatRecord = new File(s.getParentFile(),
-				s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		if (!chatRecord.exists()) {
 			try {
 				chatRecord.createNewFile();

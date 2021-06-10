@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
 
 public class ChatClient {
 	private Socket MsgSocket;
@@ -157,8 +158,7 @@ class Login extends JFrame implements Flag {
 		textPanel.setSize(100, 50);
 
 		JButton loginButton = new JButton("登录");
-		loginButton.addActionListener(e->
-		{
+		loginButton.addActionListener(e -> {
 
 			if (IsSending == 1) {
 				return;
@@ -172,14 +172,13 @@ class Login extends JFrame implements Flag {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-					String.valueOf(passwordField.getPassword()), 1);
+			sendMesg messenger = new sendMesg(usernameTextArea.getText(), String.valueOf(passwordField.getPassword()),
+					1);
 			new Thread(messenger).start();
 		});
 
 		JButton signinButton = new JButton("注册");
-		signinButton.addActionListener(e->
-		{
+		signinButton.addActionListener(e -> {
 			if (IsSending == 1) {
 				return;
 			}
@@ -192,8 +191,8 @@ class Login extends JFrame implements Flag {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			sendMesg messenger = new sendMesg(usernameTextArea.getText(),
-					String.valueOf(passwordField.getPassword()), 2);
+			sendMesg messenger = new sendMesg(usernameTextArea.getText(), String.valueOf(passwordField.getPassword()),
+					2);
 			new Thread(messenger).start();
 		});
 
@@ -291,7 +290,7 @@ class ServerConnection {
 	}
 
 	ServerConnection(Socket msg, Socket file) {
-		System.out.println(parentFile.getAbsolutePath());
+		// System.out.println(parentFile.getAbsolutePath());
 		this.MsgSocket = msg;
 		this.FileSocket = file;
 		try {
@@ -370,6 +369,7 @@ class ServerConnection {
 
 	void receiveFile(String filePath) {
 		DataInputStream fileFromServer = getFileFromServer();
+		// System.out.println(filePath);
 		try {
 			// 先得到长度
 			long length = fileFromServer.readLong();

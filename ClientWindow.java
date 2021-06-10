@@ -53,17 +53,15 @@ class ClientWindow extends JFrame implements Flag {
 		createScrollPanel(tabbedPane, Flag.GROUPPANE);
 		createScrollPanel(tabbedPane, Flag.MESSAGE);
 		createScrollPanel(tabbedPane, Flag.RECENTPANE);
-		// tabbedPane.setEnabledAt(1, true);
+		//		tabbedPane.setEnabledAt(1, true);
 		tabbedPane.setSelectedIndex(0);
 		tabbedPane.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseEntered(MouseEvent e) {
+			@Override public void mouseEntered(MouseEvent e) {
 				super.mouseEntered(e);
 				tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 			}
 
-			@Override
-			public void mouseExited(MouseEvent e) {
+			@Override public void mouseExited(MouseEvent e) {
 				super.mouseExited(e);
 				tabbedPane.setCursor(Cursor.getDefaultCursor());
 			}
@@ -78,8 +76,7 @@ class ClientWindow extends JFrame implements Flag {
 		this.add(tabbedPane);
 
 		this.addComponentListener(new ComponentAdapter() {
-			@Override
-			public void componentResized(ComponentEvent e) {
+			@Override public void componentResized(ComponentEvent e) {
 				int width = getContentPane().getWidth();
 				int height = getContentPane().getHeight();
 				userPanel.setBounds(0, 0, width, 70);
@@ -148,35 +145,29 @@ class ClientWindow extends JFrame implements Flag {
 		scrollPane.getVerticalScrollBar().setUnitIncrement(13);
 		tabbedPane.addTab("消息列表", paneIcon, scrollPane, "这里是你的消息通知列表");
 		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
-			@Override
-			String getMsgString(MsgPack mp) {
+			@Override String getMsgString(MsgPack mp) {
 				return "测试";
 			}
 
-			@Override
-			void Send(String IsAccept) {
+			@Override void Send(String IsAccept) {
 				MsgList.remove(panel);
 			}
 		});
 		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
-			@Override
-			String getMsgString(MsgPack mp) {
+			@Override String getMsgString(MsgPack mp) {
 				return "测试";
 			}
 
-			@Override
-			void Send(String IsAccept) {
+			@Override void Send(String IsAccept) {
 				MsgList.remove(panel);
 			}
 		});
 		MsgList.add(new MsgPanel(new MsgPack(0, "", "")) {
-			@Override
-			String getMsgString(MsgPack mp) {
+			@Override String getMsgString(MsgPack mp) {
 				return "测试";
 			}
 
-			@Override
-			void Send(String IsAccept) {
+			@Override void Send(String IsAccept) {
 				MsgList.remove(panel);
 			}
 		});
@@ -188,7 +179,7 @@ class ClientWindow extends JFrame implements Flag {
 		// 最近消息最后再创建
 		if (sign == RECENTPANE) {
 			List<Map.Entry<String, ChatPanel>> arrayList = new ArrayList<>(chatPanels2.entrySet());
-			arrayList.sort((o1, o2) -> o2.getValue().timeArea.getText().compareTo(o1.getValue().timeArea.getText()));
+			arrayList.sort((o1, o2)->o2.getValue().timeArea.getText().compareTo(o1.getValue().timeArea.getText()));
 			for (Map.Entry<String, ChatPanel> stringChatPanelEntry : arrayList) {
 				targetPane.add(stringChatPanelEntry.getValue());
 			}
@@ -246,13 +237,11 @@ class ClientWindow extends JFrame implements Flag {
 	public void addMessage(String s) {
 		MsgList.add(new MsgPanel(s) {
 
-			@Override
-			String getMsgString(MsgPack mp) {
+			@Override String getMsgString(MsgPack mp) {
 				return null;
 			}
 
-			@Override
-			void Send(String IsAccept) {
+			@Override void Send(String IsAccept) {
 				MsgList.remove(this);
 			}
 
@@ -295,7 +284,8 @@ class ClientWindow extends JFrame implements Flag {
 
 			textField.setColumns(10);
 			addButton.setMargin(new Insets(0, 0, 0, 0));
-			addButton.addActionListener(e -> {
+			addButton.addActionListener(e->
+			{
 				JPopupMenu popMenu = new JPopupMenu();
 				JMenuItem addFriend = new JMenuItem("加好友");
 				JMenuItem creatGroup = new JMenuItem("创建群聊");
@@ -303,7 +293,8 @@ class ClientWindow extends JFrame implements Flag {
 				popMenu.add(creatGroup);
 
 				// 写一下输入检查
-				addFriend.addActionListener(e1 -> {
+				addFriend.addActionListener(e1->
+				{
 					String str = textField.getText();
 					// if (!str.contains("\\|")) {
 					// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n好友1|好友2|......");
@@ -313,7 +304,8 @@ class ClientWindow extends JFrame implements Flag {
 					hand.PutMsg(new MsgPack(Flag.ADDFRIEND, str, sc.getSelfName() + "|" + str));
 				});
 
-				creatGroup.addActionListener(e12 -> {
+				creatGroup.addActionListener(e12->
+				{
 					String str = textField.getText();
 					// if (!str.contains(":")) {
 					// JOptionPane.showMessageDialog(cw, "输入格式有误！\n输入格式为:\n群名:群成员1|群成员2|......");
@@ -322,7 +314,6 @@ class ClientWindow extends JFrame implements Flag {
 					textField.setText("");
 					String groupName = str.split(":")[0];
 					str = str.split(":")[1];
-					// System.out.println(str);
 					hand.PutMsg(new MsgPack(Flag.CREATEGROUP, str, sc.getSelfName() + "|" + groupName));
 				});
 
@@ -340,15 +331,13 @@ class ClientWindow extends JFrame implements Flag {
 			this.setLayout(new FlowLayout(FlowLayout.CENTER));
 		}
 
-		@Override
-		public Component add(Component comp) {
+		@Override public Component add(Component comp) {
 			count += 1;
 			this.setPreferredSize(new Dimension(265, 70 * count));
 			return super.add(comp);
 		}
 
-		@Override
-		public void remove(Component comp) {
+		@Override public void remove(Component comp) {
 			count -= 1;
 			this.setPreferredSize(new Dimension(265, 70 * count));
 			super.remove(comp);
@@ -372,40 +361,35 @@ class ClientWindow extends JFrame implements Flag {
 			AcceptButton.setBounds(65, 38, 60, 25);
 			RefuseButton.setBounds(140, 38, 60, 25);
 
-			AcceptButton.addActionListener(e -> Send("Accept"));
+			AcceptButton.addActionListener(e->Send("Accept"));
 
-			RefuseButton.addActionListener(e -> Send("Refuse"));
+			RefuseButton.addActionListener(e->Send("Refuse"));
 
 			this.add(AcceptButton);
 			this.add(RefuseButton);
 
 			this.addMouseListener(new MouseListener() {
 
-				@Override
-				public void mouseClicked(MouseEvent e) {
+				@Override public void mouseClicked(MouseEvent e) {
 					// TODO Auto-generated method stub
 
 				}
 
-				@Override
-				public void mousePressed(MouseEvent e) {
+				@Override public void mousePressed(MouseEvent e) {
 					// TODO Auto-generated method stub
 
 				}
 
-				@Override
-				public void mouseReleased(MouseEvent e) {
+				@Override public void mouseReleased(MouseEvent e) {
 					// TODO Auto-generated method stub
 
 				}
 
-				@Override
-				public void mouseEntered(MouseEvent e) {
+				@Override public void mouseEntered(MouseEvent e) {
 					panel.setBackground(Color.lightGray);
 				}
 
-				@Override
-				public void mouseExited(MouseEvent e) {
+				@Override public void mouseExited(MouseEvent e) {
 					panel.setBackground(Color.white);
 				}
 			});
@@ -445,8 +429,7 @@ class ClientWindow extends JFrame implements Flag {
 			panel.setLayout(null);
 			panel.setBackground(Color.white);
 			this.addMouseListener(new MouseListener() {
-				@Override
-				public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
+				@Override public void mouseClicked(MouseEvent e) {// 这里是不是应该释放一下？
 					if (chatWindows.containsKey(TargetId)) {
 						chatWindows.get(TargetId).setVisible(true);
 					} else {
@@ -458,23 +441,19 @@ class ClientWindow extends JFrame implements Flag {
 					}
 				}
 
-				@Override
-				public void mousePressed(MouseEvent e) {
+				@Override public void mousePressed(MouseEvent e) {
 					panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				}
 
-				@Override
-				public void mouseReleased(MouseEvent e) {
+				@Override public void mouseReleased(MouseEvent e) {
 					panel.setCursor(Cursor.getDefaultCursor());
 				}
 
-				@Override
-				public void mouseEntered(MouseEvent e) {
+				@Override public void mouseEntered(MouseEvent e) {
 					panel.setBackground(Color.lightGray);
 				}
 
-				@Override
-				public void mouseExited(MouseEvent e) {
+				@Override public void mouseExited(MouseEvent e) {
 					panel.setBackground(Color.white);
 				}
 			});
@@ -610,8 +589,7 @@ class ClientWindow extends JFrame implements Flag {
 		private class Receiver implements Runnable {
 			String path = System.getProperty("user.dir") + "/src/client/users/";
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					int sign;
 					String message, tar;
@@ -622,7 +600,7 @@ class ClientWindow extends JFrame implements Flag {
 						switch (sign) {
 						case SENDFILE: {
 							String name = message.split("\\|")[3];
-							s.receiveFile(path + tar + "/cache" + name);
+							s.receiveFile(path + tar + "/cache/" + name);
 							if (message.split("\\|")[1].equals(message.split("\\|")[5])) {
 								break;
 							}
@@ -641,7 +619,7 @@ class ClientWindow extends JFrame implements Flag {
 								pw.println(message);
 								cw.chatPanels.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
 								cw.chatPanels2.get(split[1]).updateRecentMsg(Flag.FRIENDPANE, message);
-								sortRecentPane(cw.chatPanels2.get(split[1]));
+								sortRecentPane(cw.chatPanels2.get(split[5]));
 								pw.close();
 							} else {
 								// 写入本地文件
@@ -663,14 +641,12 @@ class ClientWindow extends JFrame implements Flag {
 						{
 							MsgList.add(new MsgPanel(new MsgPack(ADDFRIEND, message.split("\\|")[0], message)) {
 
-								@Override
-								String getMsgString(MsgPack mp) {
+								@Override String getMsgString(MsgPack mp) {
 									String str = mp.TargetName + " 向你发来好友申请";
 									return str;
 								}
 
-								@Override
-								void Send(String IsAccept) {
+								@Override void Send(String IsAccept) {
 									hand.PutMsg(new MsgPack(ACCEPTFRIEND, this.mp.TargetName,
 											mp.MsgString + "|" + IsAccept));
 									if (IsAccept.equals("Accept")) {
@@ -690,16 +666,10 @@ class ClientWindow extends JFrame implements Flag {
 										} catch (FileNotFoundException e) {
 											e.printStackTrace();
 										}
-										chatPanels.put(mp.MsgString.split("\\|")[0],
-												new ChatPanel(mp.MsgString.split("\\|")[0],
-														mp.MsgString.split("\\|")[0], Flag.FRIENDPANE));
-										FriendList.add(chatPanels.get(mp.MsgString.split("\\|")[0]));
-										chatPanels2.put(mp.MsgString.split("\\|")[0],
-												new ChatPanel(mp.MsgString.split("\\|")[0],
-														mp.MsgString.split("\\|")[0], Flag.FRIENDPANE));
-										RecentList.add(chatPanels2.get(mp.MsgString.split("\\|")[0]), 0);
+										FriendList.add(new ChatPanel(mp.MsgString.split("\\|")[0],
+												mp.MsgString.split("\\|")[0], Flag.FRIENDPANE));
+										FriendList.repaint();
 										FriendList.revalidate();
-										RecentList.revalidate();
 									}
 									MsgList.remove(panel);
 								}
@@ -728,12 +698,7 @@ class ClientWindow extends JFrame implements Flag {
 									e.printStackTrace();
 								}
 								addMessage(split[1] + "接受了你的好友请求");
-								chatPanels.put(split[1], new ChatPanel(split[1], split[1], Flag.FRIENDPANE));
-								FriendList.add(chatPanels.get(split[1]));
-								chatPanels2.put(split[1], new ChatPanel(split[1], split[1], Flag.FRIENDPANE));
-								RecentList.add(chatPanels2.get(split[1]), 0);
-								FriendList.revalidate();
-								RecentList.revalidate();
+								FriendList.add(new ChatPanel(split[1], split[1], Flag.FRIENDPANE));
 							} else if (split[2].equals("Refuse")) {
 								addMessage(split[1] + "拒绝了你的好友请求");
 							}
@@ -765,28 +730,20 @@ class ClientWindow extends JFrame implements Flag {
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
-								chatPanels.put(message.split("\\|")[1], new ChatPanel(message.split("\\|")[2],
-										message.split("\\|")[1], Flag.GROUPPANE));
-								GroupList.add(chatPanels.get(message.split("\\|")[1]));
-								chatPanels2.put(message.split("\\|")[1], new ChatPanel(message.split("\\|")[2],
-										message.split("\\|")[1], Flag.GROUPPANE));
-								RecentList.add(chatPanels2.get(message.split("\\|")[1]), 0);
+								GroupList.add(new ChatPanel(message.split("\\|")[2], message.split("\\|")[1],
+										Flag.GROUPPANE));
 								GroupList.repaint();
 								GroupList.revalidate();
-								RecentList.repaint();
-								RecentList.revalidate();
 							} else {
 								MsgList.add(new MsgPanel(new MsgPack(CREATEGROUP, message.split("\\|")[0], message)) {
 
-									@Override
-									String getMsgString(MsgPack mp) {
-										String str = mp.MsgString.split("\\|")[0] + " 向你发来群聊邀请,群id为:"
-												+ mp.MsgString.split("\\|")[1];
+									@Override String getMsgString(MsgPack mp) {
+										String str = mp.MsgString.split("\\|")[0] + " 向你发来群聊邀请,群id为:" + mp.MsgString
+												.split("\\|")[1];
 										return str;
 									}
 
-									@Override
-									void Send(String IsAccept) {
+									@Override void Send(String IsAccept) {
 										if (IsAccept.equals("Accept")) {// 这么写的话，如果拒绝加群就不发了
 											hand.PutMsg(new MsgPack(ACCEPTGROUP, this.mp.TargetName,
 													mp.MsgString + "|" + IsAccept));// A|ID|NAME|ACCEPT
@@ -801,8 +758,8 @@ class ClientWindow extends JFrame implements Flag {
 											PrintWriter pw;
 											try {
 												pw = new PrintWriter(new FileOutputStream(file, true));
-												pw.println(mp.MsgString.split("\\|")[1] + "\n"
-														+ mp.MsgString.split("\\|")[2]);
+												pw.println(mp.MsgString.split("\\|")[1] + "\n" + mp.MsgString
+														.split("\\|")[2]);
 												pw.close();
 											} catch (FileNotFoundException e) {
 												e.printStackTrace();
@@ -814,16 +771,10 @@ class ClientWindow extends JFrame implements Flag {
 											} catch (IOException e) {
 												e.printStackTrace();
 											}
-											chatPanels.put(message.split("\\|")[1], new ChatPanel(
-													message.split("\\|")[2], message.split("\\|")[1], Flag.GROUPPANE));
-											GroupList.add(chatPanels.get(message.split("\\|")[1]));
-											chatPanels2.put(message.split("\\|")[1], new ChatPanel(
-													message.split("\\|")[2], message.split("\\|")[1], Flag.GROUPPANE));
-											RecentList.add(chatPanels2.get(message.split("\\|")[1]), 0);
+											GroupList.add(new ChatPanel(mp.MsgString.split("\\|")[2],
+													mp.MsgString.split("\\|")[1], Flag.GROUPPANE));
 											GroupList.repaint();
 											GroupList.revalidate();
-											RecentList.repaint();
-											RecentList.revalidate();
 										}
 										MsgList.remove(panel);
 									}
@@ -851,8 +802,7 @@ class ClientWindow extends JFrame implements Flag {
 
 		private class Sender implements Runnable {
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				while (go == 1) {
 					try {
 						Thread.sleep(5);// 为啥能用了？
@@ -880,8 +830,7 @@ class ClientWindow extends JFrame implements Flag {
 
 			private void sendFile(MsgPack mp) {
 				SendText(mp);
-				File ImgFile = new File(s.getParentFile(), s.getSelfName() + "/cache" + mp.MsgString.split("\\|")[3]);
-				s.uploadFile(ImgFile.getAbsolutePath());
+				s.uploadFile(mp.MsgString.split("\\|")[3]);
 			}
 
 			private void SendText(MsgPack mp) {

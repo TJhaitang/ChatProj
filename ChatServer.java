@@ -43,8 +43,7 @@ public class ChatServer {
 			this.t = tar;
 		}
 
-		@Override
-		public void run() {
+		@Override public void run() {
 			int sign;
 			String username;
 			String password;
@@ -195,8 +194,7 @@ public class ChatServer {
 
 		private class Receiver implements Runnable {
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					try {
 						int sign = t.getMsgFromClient().readInt();
@@ -245,16 +243,20 @@ public class ChatServer {
 			private void readAndSendFile(MsgPack mp) {
 				String[] split = mp.MsgString.split("\\|");
 				String name = split[3];
+				name = name.substring(name.lastIndexOf("\\"));
+				System.out.println(name);
+				mp.MsgString =
+						split[0] + "|" + split[1] + "|" + split[2] + "|" + name + "|" + split[4] + "|" + split[5];
 				t.receiveFile(path + mp.TargetName + "/cache" + name);
 				SendMsg(mp);
-				// new File(path + mp.TargetName + "/cache" + name).delete();
+				new File(path + mp.TargetName + "/cache" + name).delete();
 
 			}
 
 			private void AcceptGroup(MsgPack mp) {
 				File file = new File(
 						System.getProperty("user.dir") + "/src/server/groups/" + mp.MsgString.split("\\|")[1] + ".txt");
-				// System.out.println("qwwe:" + file.getAbsolutePath() + " " + t.getUsername());
+				System.out.println("qwwe:" + file.getAbsolutePath() + "  " + t.getUsername());
 
 				try {
 					file.createNewFile();
@@ -311,7 +313,7 @@ public class ChatServer {
 					pw = new PrintWriter(new FileOutputStream(
 							System.getProperty("user.dir") + "/src/server/users/" + t.getUsername() + "/groupList.txt",
 							true));
-					pw.println(groupId + "\n" + mp.MsgString.split("\\|")[1]);
+					pw.println(mp.MsgString.split("\\|")[1] + "\n" + mp.MsgString.split("\\|")[2]);
 					pw.close();
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -361,7 +363,7 @@ public class ChatServer {
 				String TargetName = mp.TargetName, Msg = mp.MsgString;
 				// String[] split = Msg.split("\\|");
 				if (isFriend(TargetName)) {// 这里是不是要加上判断这个人是不是对方好友-按理说不会有问题，但万一呢
-					SendMsgToUser(new MsgPack(mp.flag, TargetName, Msg));
+					SendMsgToUser(new MsgPack(Flag.SENDTEXT, TargetName, Msg));
 				} else {// 这里实现发群的逻辑
 					File UserList = new File(
 							System.getProperty("user.dir") + "/src/server/groups/" + TargetName + ".txt");
@@ -370,7 +372,7 @@ public class ChatServer {
 						String name;
 						while ((name = br.readLine()) != null) {
 							if (!name.equals(t.getUsername())) {
-								SendMsgToUser(new MsgPack(mp.flag, name, Msg));
+								SendMsgToUser(new MsgPack(Flag.SENDTEXT, name, Msg));
 							}
 						}
 						br.close();
@@ -409,8 +411,7 @@ public class ChatServer {
 				// System.out.println("测试一下");
 			}
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				this.display();
 				while (go == 1) {
 					try {
@@ -445,11 +446,8 @@ public class ChatServer {
 									}
 								}
 							} else if (mp.flag == Flag.SENDFILE) {
-								// System.out.println("SENDFILE");
 								t.sendFile(path + mp.TargetName + "/cache" + mp.MsgString.split("\\|")[3]);
 							}
-							// System.out.println(mp.flag);
-
 						} catch (IOException e) {// 写文件
 							AddMsgToFile(t.getUsername(), mp);
 							e.printStackTrace();
@@ -523,7 +521,6 @@ class TargetConnection {// 建立一个类用以存放与用户的连接
 	}
 
 	void sendFile(String filePath) {
-		// System.out.println(filePath);
 		try {
 			// 先发送文件大小
 			long length = new File(filePath).length();
