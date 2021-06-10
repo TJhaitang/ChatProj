@@ -600,7 +600,7 @@ class ClientWindow extends JFrame implements Flag {
 						switch (sign) {
 						case SENDFILE: {
 							String name = message.split("\\|")[3];
-							s.receiveFile(path + tar + "/cache/" + name);
+							s.receiveFile(path + tar + "/cache" + name);
 							if (message.split("\\|")[1].equals(message.split("\\|")[5])) {
 								break;
 							}
@@ -632,7 +632,6 @@ class ClientWindow extends JFrame implements Flag {
 								pw.println(message);
 								pw.close();
 							}
-
 							// 写入用户主窗口
 							break;
 						}

@@ -158,6 +158,7 @@ public class ChatServer {
 
 	class HandleASession {// 在这里实现信息交互
 		TargetConnection t;
+		final String path = System.getProperty("user.dir") + "/src/server/users/";
 		Receiver receiver = new Receiver();
 		Sender sender = new Sender();
 		Queue<MsgPack> MsgQueue = new LinkedList<>();
@@ -192,7 +193,6 @@ public class ChatServer {
 		}
 
 		private class Receiver implements Runnable {
-			final String path = System.getProperty("user.dir") + "/src/server/users/";
 
 			@Override public void run() {
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
@@ -241,21 +241,15 @@ public class ChatServer {
 			}
 
 			private void readAndSendFile(MsgPack mp) {
-				try {
-					String[] split = mp.MsgString.split("\\|");
-					String name = split[3];
-					name = name.substring(name.lastIndexOf("\\"));
-					mp.MsgString =
-							split[0] + "|" + split[1] + "|" + split[2] + "|" + name + "|" + split[4] + "|" + split[5];
-					t.receiveFile(path + mp.TargetName + "/cache/" + name);
-					t.getMsgToClient().writeInt(Flag.SENDFILE);
-					t.getMsgToClient().writeUTF(mp.TargetName);
-					t.getMsgToClient().writeUTF(mp.MsgString);
-					t.sendFile(path + mp.TargetName + "/cache/" + name);
-					new File(path + mp.TargetName + "/cache/" + name).delete();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				String[] split = mp.MsgString.split("\\|");
+				String name = split[3];
+				name = name.substring(name.lastIndexOf("\\"));
+				System.out.println(name);
+				mp.MsgString =
+						split[0] + "|" + split[1] + "|" + split[2] + "|" + name + "|" + split[4] + "|" + split[5];
+				t.receiveFile(path + mp.TargetName + "/cache" + name);
+				SendMsg(mp);
+				new File(path + mp.TargetName + "/cache" + name).delete();
 
 			}
 
@@ -451,6 +445,8 @@ public class ChatServer {
 										e.printStackTrace();
 									}
 								}
+							} else if (mp.flag == Flag.SENDFILE) {
+								t.sendFile(path + mp.TargetName + "/cache" + mp.MsgString.split("\\|")[3]);
 							}
 						} catch (IOException e) {// 写文件
 							AddMsgToFile(t.getUsername(), mp);
