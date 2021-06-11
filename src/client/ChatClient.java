@@ -16,10 +16,10 @@ public class ChatClient {
 	}
 
 	ChatClient() {
-//		int port = 24705;
-//		String address = "5.180.76.28";
-		int port = 8888;
-		String address = "localhost";
+		int port = 59965;
+		String address = "5.180.76.28";
+		//		int port = 8888;
+		//		String address = "localhost";
 		try {
 			MsgSocket = new Socket(address, port);// 建立连接
 			FileSocket = new Socket(address, port);
@@ -29,7 +29,7 @@ public class ChatClient {
 		}
 		ServerConnection s = new ServerConnection(MsgSocket, FileSocket);
 		if (!s.check()) {
-			JOptionPane.showMessageDialog(null, "未与服务器建立连接");
+			JOptionPane.showMessageDialog(null, "未与服务器建立连接2");
 			System.exit(0);
 		}
 		Login lg = new Login(s);
@@ -160,7 +160,8 @@ class Login extends JFrame implements Flag {
 		textPanel.setSize(100, 50);
 
 		JButton loginButton = new JButton("登录");
-		loginButton.addActionListener(e -> {
+		loginButton.addActionListener(e->
+		{
 
 			if (IsSending == 1) {
 				return;
@@ -180,7 +181,8 @@ class Login extends JFrame implements Flag {
 		});
 
 		JButton signinButton = new JButton("注册");
-		signinButton.addActionListener(e -> {
+		signinButton.addActionListener(e->
+		{
 			if (IsSending == 1) {
 				return;
 			}

@@ -1,6 +1,10 @@
 package client;
 
 import javax.swing.*;
+import javax.swing.event.MenuKeyEvent;
+import javax.swing.event.MenuKeyListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -53,7 +57,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 		fileButton.setSize(30, 20);
 		fileButton.setMargin(new Insets(0, 0, 0, 0));
 		// 文件发送
-		fileButton.addActionListener(e -> {
+		fileButton.addActionListener(e->
+		{
 			fileChooser.setMultiSelectionEnabled(true);
 			int result = fileChooser.showOpenDialog(this);
 			if (result == JFileChooser.APPROVE_OPTION) {
@@ -94,7 +99,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 		TextBox.setBounds(30, 355, 620, 100);
 		this.add(TextBox);
 
-		sendButton.addActionListener(e -> {
+		sendButton.addActionListener(e->
+		{
 			String text = Text.getText();
 			if (text == null || text.equals("")) {
 				return;
@@ -103,7 +109,8 @@ abstract class ChatWindow extends JFrame implements Flag {
 			Text.setText("");
 			new Thread(sender).start();
 		});
-		voiceButton.addActionListener(e -> {
+		voiceButton.addActionListener(e->
+		{
 			// -//发消息
 		});
 		sendButton.setMargin(new Insets(0, 0, 0, 0));
@@ -118,8 +125,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 		this.add(buttonPanel_text);
 
 		this.addComponentListener(new ComponentAdapter() {// 动态调整窗口大小
-			@Override
-			public void componentResized(ComponentEvent e) {
+			@Override public void componentResized(ComponentEvent e) {
 				int width = getContentPane().getWidth();
 				int height = getContentPane().getHeight();
 				buttonPanel_side.setBounds(0, 0, 30, height);
@@ -187,45 +193,83 @@ abstract class ChatWindow extends JFrame implements Flag {
 				JLabel imgLabel = new JLabel(img);
 				imgLabel.addMouseListener(new MouseListener() {
 
-					@Override
-					public void mouseClicked(MouseEvent e) {
-						// try {
-						// Desktop.getDesktop().open(new File("D:\\ruc"));
-						// } catch (IOException e1) {
-						// e1.printStackTrace();
-						// }
-						JFrame ImgWindow = new JFrame();
-						ImgWindow.setLayout(new FlowLayout());
-						ImageIcon img = new ImageIcon(ImgPath.getAbsolutePath());
-						JLabel imgLabel = new JLabel(img);
-						ImgWindow.add(imgLabel);
-						// imgLabel.setBounds(0, 0, img.getIconWidth(), img.getIconHeight());
-						ImgWindow.setResizable(false);
-						ImgWindow.setSize(img.getIconWidth(), img.getIconHeight() + 55);
-						Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-						ImgWindow.setLocation((dim.width) / 2, (dim.height) / 2);
-						ImgWindow.setVisible(true);
+					@Override public void mouseClicked(MouseEvent e) {
+						if (e.isMetaDown()) {//检测鼠标右键单击
+							final JPopupMenu jp = new JPopupMenu();
+							JMenuItem save = new JMenuItem("保存");
+							JMenuItem open = new JMenuItem("打开文件所在位置");
+							save.addActionListener(e13->
+							{
+								fileChooser.setSelectedFile(ImgPath);
+								fileChooser.setCurrentDirectory(FileSystemView.getFileSystemView().getHomeDirectory());
+								int returnVal = fileChooser.showSaveDialog(MsgLabel);
+								if (returnVal == JFileChooser.APPROVE_OPTION) {
+									File file = fileChooser.getSelectedFile();
+									if (file.exists()) {
+										//若选择已有文件询问是否要覆盖
+										int i = JOptionPane.showConfirmDialog(fileChooser, "该文件已经存在，确定要覆盖吗？");
+										if (i == JOptionPane.YES_OPTION) {
+											try {
+												Files.copy(ImgPath.toPath(), file.toPath());
+												System.out.println("保存成功");
+											} catch (Exception e1) {
+												e1.printStackTrace();
+											}
+										}
+									} else {
+										try {
+											Files.copy(ImgPath.toPath(), file.toPath());
+											System.out.println("保存成功");
+										} catch (Exception e1) {
+											e1.printStackTrace();
+										}
+									}
+
+								}
+							});
+							open.addActionListener(e12->
+							{
+								try {
+									System.out.println("111");
+									Desktop.getDesktop().open(new File(s.getParentFile(), s.getSelfName() + "/cache"));
+								} catch (IOException ioException) {
+									ioException.printStackTrace();
+								}
+							});
+							jp.add(save);
+							jp.add(open);
+							jp.show(imgLabel, e.getX(), e.getY());
+						} else {
+							JFrame ImgWindow = new JFrame();
+							ImgWindow.setLayout(new FlowLayout());
+							ImageIcon img = new ImageIcon(ImgPath.getAbsolutePath());
+							JLabel imgLabel = new JLabel(img);
+							ImgWindow.add(imgLabel);
+							// imgLabel.setBounds(0, 0, img.getIconWidth(), img.getIconHeight());
+							ImgWindow.setResizable(false);
+							ImgWindow.setSize(img.getIconWidth(), img.getIconHeight() + 55);
+							Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+							ImgWindow.setLocation((dim.width - ImgWindow.getWidth()) / 2,
+									(dim.height - ImgWindow.getHeight()) / 2);
+							ImgWindow.setVisible(true);
+						}
 					}
 
-					@Override
-					public void mousePressed(MouseEvent e) {
+					@Override public void mousePressed(MouseEvent e) {
 						// TODO Auto-generated method stub
 
 					}
 
-					@Override
-					public void mouseReleased(MouseEvent e) {
+					@Override public void mouseReleased(MouseEvent e) {
 						// TODO Auto-generated method stub
 
 					}
 
-					@Override
-					public void mouseEntered(MouseEvent e) {
+					@Override public void mouseEntered(MouseEvent e) {
 						imgLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 					}
 
-					@Override
-					public void mouseExited(MouseEvent e) {
+					@Override public void mouseExited(MouseEvent e) {
 						imgLabel.setCursor(Cursor.getDefaultCursor());
 					}
 				});
@@ -255,8 +299,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 				JLabel imgLabel = new JLabel(img);
 				imgLabel.addMouseListener(new MouseListener() {
 
-					@Override
-					public void mouseClicked(MouseEvent e) {
+					@Override public void mouseClicked(MouseEvent e) {
 						try {
 							Desktop.getDesktop().open(new File(s.getParentFile(), s.getSelfName() + "/cache"));
 						} catch (IOException e1) {
@@ -264,25 +307,21 @@ abstract class ChatWindow extends JFrame implements Flag {
 						}
 					}
 
-					@Override
-					public void mousePressed(MouseEvent e) {
+					@Override public void mousePressed(MouseEvent e) {
 						// TODO Auto-generated method stub
 
 					}
 
-					@Override
-					public void mouseReleased(MouseEvent e) {
+					@Override public void mouseReleased(MouseEvent e) {
 						// TODO Auto-generated method stub
 
 					}
 
-					@Override
-					public void mouseEntered(MouseEvent e) {
+					@Override public void mouseEntered(MouseEvent e) {
 						imgLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 					}
 
-					@Override
-					public void mouseExited(MouseEvent e) {
+					@Override public void mouseExited(MouseEvent e) {
 						imgLabel.setCursor(Cursor.getDefaultCursor());
 					}
 				});
@@ -351,8 +390,7 @@ abstract class ChatWindow extends JFrame implements Flag {
 			isImage = flag;
 		}
 
-		@Override
-		public void run() {
+		@Override public void run() {
 			if (file != null) {
 				String name = file.getAbsolutePath();
 				name = name.substring(name.lastIndexOf("\\"));
@@ -389,9 +427,9 @@ class GroupWindow extends ChatWindow {
 		this.setVisible(true);
 	}
 
-	@Override
-	void display() {
-		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+	@Override void display() {
+		File chatRecord = new File(s.getParentFile(),
+				s.getSelfName() + "/groupMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		if (!chatRecord.exists()) {
 			try {
 				chatRecord.createNewFile();
@@ -435,10 +473,10 @@ class FriendWindow extends ChatWindow {
 		this.setVisible(true);
 	}
 
-	@Override
-	void display() {
+	@Override void display() {
 		// 从文件尾开始读文件：https://blog.csdn.net/qq_21682469/article/details/78808713
-		File chatRecord = new File(s.getParentFile(), s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
+		File chatRecord = new File(s.getParentFile(),
+				s.getSelfName() + "/friendMsg/" + TargetId + ".txt");// 此文件在加好友时创建,文件路径记得改
 		if (!chatRecord.exists()) {
 			try {
 				chatRecord.createNewFile();

@@ -43,8 +43,7 @@ public class ChatServer {
 			this.t = tar;
 		}
 
-		@Override
-		public void run() {
+		@Override public void run() {
 			int sign;
 			String username;
 			String password;
@@ -151,6 +150,7 @@ public class ChatServer {
 				new File(f.getAbsolutePath() + "/friendList.txt").createNewFile();
 				new File(f.getAbsolutePath() + "/MsgQ.txt").createNewFile();
 				new File(f.getAbsolutePath() + "/update.txt").createNewFile();
+				new File(f.getAbsolutePath() + "/cache").mkdir();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -195,8 +195,7 @@ public class ChatServer {
 
 		private class Receiver implements Runnable {
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				while (true) {// 接收到一个信息——信息格式是什么样的？——如果是图片、群聊呢
 					try {
 						int sign = t.getMsgFromClient().readInt();
@@ -409,8 +408,7 @@ public class ChatServer {
 				// System.out.println("测试一下");
 			}
 
-			@Override
-			public void run() {
+			@Override public void run() {
 				this.display();
 				while (go == 1) {
 					try {
